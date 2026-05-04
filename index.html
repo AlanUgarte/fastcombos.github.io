@@ -1123,16 +1123,6 @@ function renderGrid(cat){
     </div>
   `).join('');
 }
-function irAProductos(){
-  const sec = document.getElementById('productos');
-  if(!sec) return;
-  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  // Activa la primera categoría (Alimentos) por si estaba en otra
-  setTimeout(() => {
-    const primerTab = document.querySelector('.cat-tab');
-    if(primerTab) primerTab.click();
-  }, 400);
-}
 
 function renderAllGrids(){
   Object.keys(PRODUCTS).forEach(cat => renderGrid(cat));
@@ -1289,6 +1279,19 @@ ${lines}
    INIT
 ════════════════════════════════════════ */
 renderAllGrids();
+
+function irAProductos(){
+  const sec = document.getElementById('productos');
+  if(!sec) return;
+  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Activa la primera categoría (Alimentos) por si estaba en otra
+  setTimeout(() => {
+    const primerTab = document.querySelector('.cat-tab');
+    if(primerTab) primerTab.click();
+  }, 400);
+}
+
 </script>
+
 </body>
 </html>
