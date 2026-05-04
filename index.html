@@ -554,15 +554,156 @@ footer{
 footer strong{color:var(--gold2);}
 
 /* ════════════════════════════════════════
-   RESPONSIVE
+   RESPONSIVE COMPLETO
+   xs  ≤ 360px  phones muy pequeños
+   sm  ≤ 480px  phones estándar
+   md  ≤ 640px  phones grandes / phablets
+   lg  ≤ 768px  tablets portrait
+   xl  ≤ 1024px tablets landscape
+   2xl > 1024px desktop
 ════════════════════════════════════════ */
-@media(max-width:600px){
-  nav{padding:.75rem 1rem;}
-  .brand{font-size:1.5rem;}
-  .topbar{gap:.75rem;font-size:.68rem;}
-  .products-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
-  .prod-name{font-size:1rem;}
-  .prod-price{font-size:1.3rem;}
+
+/* ── TABLET LANDSCAPE (≤1024px) ── */
+@media(max-width:1024px){
+  .products-grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));}
+}
+
+/* ── TABLET PORTRAIT (≤768px) ── */
+@media(max-width:768px){
+  nav{padding:.75rem 1.1rem;}
+  .brand{font-size:1.55rem;}
+  .nav-link{display:none;}
+  .hero{padding:3rem 1.25rem 2.5rem;}
+  .trust-strip{gap:.9rem;padding:.65rem 1rem;}
+  .trust-item:nth-child(4),.trust-item:nth-child(5){display:none;}
+  .hiw{padding:2.5rem 1.25rem;}
+  .steps{grid-template-columns:1fr 1fr;gap:1rem;}
+  .cat-nav-wrap{top:52px;}
+  .cat-tab{padding:.7rem .9rem;font-size:.78rem;}
+  .products-section{padding:2rem 1rem;}
+  .products-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;}
+  .cat-header{margin-bottom:1.25rem;}
+  .features{grid-template-columns:1fr 1fr;gap:.9rem;}
+  .why{padding:3rem 1.25rem;}
+  .cta-banner{padding:2.5rem 1.25rem;}
+  .drawer{width:min(420px,100vw);}
+}
+
+/* ── PHONE GRANDE (≤640px) ── */
+@media(max-width:640px){
+  .topbar{gap:.7rem;font-size:.68rem;}
+  .topbar span:nth-child(3){display:none;}
+  nav{padding:.7rem 1rem;}
+  .brand{font-size:1.4rem;}
+  .cart-btn{font-size:.78rem;padding:.5rem .85rem;gap:5px;}
+  .hero{padding:2.5rem 1rem 2rem;}
+  .hero-kicker{font-size:.62rem;letter-spacing:.25em;}
+  .hero h1{font-size:clamp(2rem,8vw,3rem);}
+  .hero-sub{font-size:.85rem;margin-bottom:2rem;}
+  .hero-ctas{gap:.7rem;}
+  .btn{font-size:.82rem;padding:.7rem 1.3rem;}
+  .trust-strip{gap:.6rem;padding:.6rem .9rem;}
+  .trust-item{font-size:.68rem;gap:4px;}
+  .trust-item:nth-child(3),.trust-item:nth-child(4),.trust-item:nth-child(5){display:none;}
+  .hiw{padding:2rem 1rem;}
+  .steps{grid-template-columns:1fr;}
+  .step{padding:1.25rem 1rem;}
+  .step-num{font-size:2.2rem;}
+  .cat-nav-wrap{top:49px;}
+  .cat-tab{padding:.65rem .75rem;font-size:.75rem;gap:4px;}
+  .cat-tab .cico{font-size:.9rem;}
+  .products-section{padding:1.5rem .85rem;}
+  .products-grid{grid-template-columns:repeat(2,1fr);gap:.75rem;}
+  .cat-header-desc{display:none;}
+  .product-body{padding:.75rem .7rem .7rem;}
+  .prod-name{font-size:.9rem;}
+  .prod-desc{font-size:.72rem;}
+  .prod-units{font-size:.65rem;margin-bottom:.4rem;}
+  .prod-price{font-size:1.15rem;}
+  .prod-footer{padding-top:.6rem;gap:.4rem;}
+  .add-btn{font-size:.72rem;padding:.45rem .7rem;}
+  .qty-btn{width:24px;height:24px;font-size:14px;}
+  .qty-num{font-size:.82rem;min-width:18px;}
+  .drawer{width:100vw;}
+  .client-form{padding:.9rem 1rem;}
+  .drawer-items{padding:.85rem 1rem;}
+  .drawer-footer{padding:.9rem 1rem;}
+  .form-group input{font-size:.85rem;padding:.55rem .85rem;}
+  .dtog-btn{padding:.6rem .3rem;}
+  .dtog-btn .dtog-ico{font-size:1.2rem;}
+  .dtog-btn .dtog-label{font-size:.7rem;}
+  .why{padding:2.5rem 1rem;}
+  .features{grid-template-columns:1fr 1fr;gap:.75rem;}
+  .feature{padding:1.1rem .9rem;}
+  .cta-banner{padding:2rem 1rem;}
+  footer{padding:1.4rem 1rem;}
+}
+
+/* ── PHONE ESTÁNDAR (≤480px) ── */
+@media(max-width:480px){
+  .topbar{padding:.35rem .75rem;font-size:.62rem;gap:.5rem;}
+  .topbar span:nth-child(2){display:none;}
+  nav{padding:.65rem .9rem;}
+  .brand{font-size:1.3rem;}
+  .hero{padding:2rem .9rem 1.75rem;}
+  .products-grid{grid-template-columns:repeat(2,1fr);gap:.6rem;}
+  .product-img-wrap img{padding:.6rem;}
+  .product-body{padding:.6rem .55rem .6rem;}
+  .prod-name{font-size:.82rem;}
+  .prod-desc{font-size:.7rem;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;}
+  .prod-units{margin-bottom:.3rem;}
+  .add-btn{font-size:.7rem;padding:.4rem .6rem;}
+  .drawer{width:100vw;border-radius:0;}
+  .drawer-head{padding:1rem;}
+  .client-form{padding:.85rem;}
+  .drawer-items{padding:.75rem;}
+  .drawer-footer{padding:.85rem;}
+  .btn-wa-send{font-size:.85rem;padding:.85rem;}
+  .total-row.main{font-size:1.15rem;}
+  .features{grid-template-columns:1fr 1fr;}
+  .feature h3{font-size:.9rem;}
+  .feature p{font-size:.72rem;}
+}
+
+/* ── PHONE XS (≤360px) ── */
+@media(max-width:360px){
+  .brand{font-size:1.15rem;}
+  .cart-btn{padding:.45rem .7rem;font-size:.72rem;}
+  .products-grid{grid-template-columns:1fr;}
+  .product-img-wrap{aspect-ratio:16/7;}
+  .product-img-wrap img{padding:.7rem;}
+  .cat-tab{padding:.6rem .6rem;font-size:.7rem;}
+  .features{grid-template-columns:1fr;}
+  .steps{grid-template-columns:1fr;}
+  .hero h1{font-size:1.9rem;}
+  .hero-ctas{flex-direction:column;align-items:stretch;}
+  .hero-ctas .btn{justify-content:center;}
+}
+
+/* ── LANDSCAPE EN PHONE (alto <500px) ── */
+@media(max-height:500px) and (orientation:landscape){
+  .hero{padding:1.5rem 1.25rem;}
+  .hero h1{font-size:1.8rem;}
+  .hero-sub{display:none;}
+  .cat-nav-wrap{top:48px;}
+  .drawer{width:min(500px,100vw);}
+}
+
+/* ── DISPOSITIVOS TÁCTILES (sin hover real) ── */
+@media(hover:none){
+  .product-card:hover{transform:none;box-shadow:none;border-color:var(--border);}
+  .step:hover{transform:none;box-shadow:none;}
+  .feature:hover{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);}
+  .product-card:active{border-color:var(--gold);box-shadow:0 4px 16px var(--gold-dim);}
+  .add-btn:active{background:var(--gold);color:#fff;}
+  .btn-gold:active{background:var(--gold2);}
+}
+
+/* ── PANTALLAS GRANDES (>1440px) ── */
+@media(min-width:1440px){
+  .products-section{max-width:1380px;}
+  .products-grid{grid-template-columns:repeat(4,1fr);}
+  .hero{padding:5.5rem 2rem 5rem;}
 }
 </style>
 </head>
