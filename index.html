@@ -504,6 +504,54 @@ nav{
 .btn-wa-send:disabled{background:#bbb;cursor:not-allowed;}
 .btn-wa-send svg{width:20px;height:20px;flex-shrink:0;}
 
+/* ════════ CUPÓN ════════ */
+.coupon-wrap{
+  padding:.9rem 1.5rem;
+  border-bottom:1px solid var(--border);
+  background:#fff;
+  flex-shrink:0;
+}
+.coupon-label{
+  font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;margin-bottom:.5rem;
+}
+.coupon-row{display:flex;gap:7px;}
+.coupon-input{
+  flex:1;background:var(--cream2);
+  border:1.5px solid var(--border2);border-radius:9px;
+  color:var(--dark);font-family:'Jost',sans-serif;
+  font-size:.86rem;padding:.55rem .9rem;outline:none;
+  transition:border-color .15s;letter-spacing:.05em;text-transform:uppercase;
+}
+.coupon-input:focus{border-color:var(--gold);}
+.coupon-input::placeholder{text-transform:none;letter-spacing:0;color:#bbb;}
+.coupon-input.valid{border-color:#2e7d32;background:#f0faf0;}
+.coupon-input.invalid{border-color:var(--red);background:#fff5f5;}
+.coupon-btn{
+  background:var(--dark);color:var(--cream);
+  border:none;border-radius:9px;
+  font-family:'Jost',sans-serif;font-size:.8rem;font-weight:500;
+  padding:.55rem 1rem;cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.coupon-btn:hover{background:var(--gold);}
+.coupon-feedback{font-size:.75rem;margin-top:.45rem;min-height:1.1rem;}
+.coupon-feedback.ok{color:#2e7d32;font-weight:500;}
+.coupon-feedback.err{color:var(--red);}
+.coupon-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(46,125,50,.1);border:1px solid rgba(46,125,50,.3);
+  color:#2e7d32;border-radius:20px;
+  font-size:.72rem;font-weight:600;
+  padding:2px 9px 2px 7px;margin-top:.35rem;
+}
+.coupon-tag button{
+  background:none;border:none;color:#2e7d32;cursor:pointer;
+  font-size:11px;line-height:1;padding:0;opacity:.65;
+}
+.coupon-tag button:hover{opacity:1;}
+@media(max-width:480px){.coupon-wrap{padding:.75rem 1rem;}}
+
 /* ════════════════════════════════════════
    WHY US
 ════════════════════════════════════════ */
@@ -1154,6 +1202,19 @@ footer strong{color:var(--gold2);}
     </div>
   </div>
 
+  <!-- CUPÓN -->
+  <div class="coupon-wrap">
+    <div class="coupon-label">🏷️ Cupón de descuento</div>
+    <div class="coupon-row">
+      <input type="text" class="coupon-input" id="couponInput"
+        placeholder="Ingresá tu cupón" maxlength="20"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter')applyCoupon()"/>
+      <button class="coupon-btn" onclick="applyCoupon()">Aplicar</button>
+    </div>
+    <div class="coupon-feedback" id="couponFeedback"></div>
+  </div>
+
   <!-- FOOTER -->
   <div class="drawer-footer">
     <div class="totals" id="totals"></div>
@@ -1536,6 +1597,16 @@ const PRODUCTS = {
 const WA_NUMBER = '5493412708638';
 let cart = {}; // { productId: qty }
 let deliveryMode = null; // 'envio' | 'retiro'
+let appliedCoupon = null; // { code, label, discount } | null
+
+/* ════════════════════════════════════════
+   CUPONES — EDITÁ AQUÍ TUS CUPONES
+   Agregá o quitá entradas según necesites.
+   discount: porcentaje como decimal (0.10 = 10%)
+════════════════════════════════════════ */
+const COUPONS = {
+  'DESCFAST1': { label: 'DescFast1', discount: 0.10, desc: '10% de descuento' }
+};
 
 /* ════════════════════════════════════════
    UTILS
@@ -1680,8 +1751,9 @@ function renderDrawerItems(){
 
   document.getElementById('totals').innerHTML = `
     <div class="total-row"><span>Subtotal</span><span>${fmt(subtotal)}</span></div>
+    ${appliedCoupon ? `<div class="total-row" style="color:#2e7d32"><span>🏷️ ${appliedCoupon.label} (−${Math.round(appliedCoupon.discount*100)}%)</span><span>−${fmt(subtotal * appliedCoupon.discount)}</span></div>` : ''}
     <div class="total-row"><span>Envío</span><span style="color:var(--gold)">A coordinar</span></div>
-    <div class="total-row main"><span>Total</span><span>${fmt(subtotal)}</span></div>
+    <div class="total-row main"><span>Total</span><span>${fmt(subtotal - (appliedCoupon ? subtotal * appliedCoupon.discount : 0))}</span></div>
   `;
   document.getElementById('btnWaSend').disabled = false;
 }
@@ -1720,6 +1792,12 @@ function sendWhatsApp(){
     return `  • ${p.name} x${qty}  →  ${fmt(p.price * qty)}`;
   }).join('\n');
 
+  const discountAmt = appliedCoupon ? subtotal * appliedCoupon.discount : 0;
+  const total = subtotal - discountAmt;
+  const couponLine = appliedCoupon
+    ? `\n🏷️ *Cupón:* ${appliedCoupon.label} (−${Math.round(appliedCoupon.discount*100)}%)  →  −${fmt(discountAmt)}`
+    : '';
+
   let deliveryLine = '';
   if(deliveryMode === 'envio'){
     const addr = document.getElementById('clientAddress').value.trim();
@@ -1737,13 +1815,47 @@ ${deliveryLine}
 ━━━━━━━━━━━━━━━━━━━━━━
 📦 *Detalle del pedido:*
 ${lines}
-━━━━━━━━━━━━━━━━━━━━━━
-💰 *TOTAL:* ${fmt(subtotal)}
+━━━━━━━━━━━━━━━━━━━━━━${couponLine}
+💰 *TOTAL:* ${fmt(total)}
 🚚 El costo de envío se coordina al confirmar
 ━━━━━━━━━━━━━━━━━━━━━━
 ¡Espero su confirmación! 😊`;
 
   window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+/* ════════════════════════════════════════
+   CUPÓN
+════════════════════════════════════════ */
+function applyCoupon(){
+  const val = document.getElementById('couponInput').value.trim().toUpperCase();
+  const fb  = document.getElementById('couponFeedback');
+  const inp = document.getElementById('couponInput');
+  if(!val){ fb.className='coupon-feedback err'; fb.textContent='⚠️ Ingresá un código.'; return; }
+  const coupon = COUPONS[val];
+  if(!coupon){
+    inp.className='coupon-input invalid';
+    fb.className='coupon-feedback err';
+    fb.textContent='❌ Cupón no válido. Verificá el código e intentá de nuevo.';
+    appliedCoupon = null;
+    renderDrawerItems();
+    return;
+  }
+  appliedCoupon = coupon;
+  inp.className='coupon-input valid';
+  fb.className='coupon-feedback ok';
+  fb.innerHTML=`✅ ${coupon.desc} aplicado <span class="coupon-tag">🏷️ ${coupon.label} <button onclick="removeCoupon()" title="Quitar">✕</button></span>`;
+  renderDrawerItems();
+  toast(`🏷️ Cupón "${coupon.label}" aplicado — ${coupon.desc}`);
+}
+function removeCoupon(){
+  appliedCoupon = null;
+  const inp = document.getElementById('couponInput');
+  inp.value=''; inp.className='coupon-input';
+  const fb = document.getElementById('couponFeedback');
+  fb.className='coupon-feedback'; fb.innerHTML='';
+  renderDrawerItems();
+  toast('🏷️ Cupón removido');
 }
 
 /* ════════════════════════════════════════
