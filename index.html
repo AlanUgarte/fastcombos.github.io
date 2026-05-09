@@ -1921,7 +1921,7 @@ function renderGrid(cat){
   const grid = document.getElementById('grid-' + cat);
   const items = PRODUCTS[cat] || [];
   grid.innerHTML = items.map((p, i) => `
-    <div class="product-card" style="cursor:pointer;animation-delay:${i*0.07}s" onclick="openComboModal('${p.id}')">
+    <div class="product-card" id="card-${p.id}" style="cursor:pointer;animation-delay:${i*0.07}s" onclick="openComboModal('${p.id}')">
       <div class="product-img-wrap">
         <img src="${p.img}" alt="${p.name}" loading="lazy"/>
         ${p.badge ? `<span class="prod-badge ${p.badgeType}">${p.badge}</span>` : ''}
@@ -1935,21 +1935,31 @@ function renderGrid(cat){
             <div class="prod-price">${fmt(p.price)}</div>
             <div class="prod-price-note">Precio por combo</div>
           </div>
-          <div class="prod-actions" onclick="event.stopPropagation()">
-            ${cart[p.id]
-              ? `<div class="qty-ctrl">
-                   <button class="qty-btn" onclick="chQty('${p.id}',-1)">−</button>
-                   <span class="qty-num">${cart[p.id]}</span>
-                   <button class="qty-btn" onclick="chQty('${p.id}',1)">+</button>
-                 </div>`
-              : `<button class="add-btn" onclick="addToCart('${p.id}')">+ Agregar</button>`
-            }
-            <button class="detail-btn" onclick="openComboModal('${p.id}')">Ver detalle</button>
+          <div class="prod-actions" id="actions-${p.id}" onclick="event.stopPropagation()">
+            ${cardActionsHTML(p.id)}
           </div>
         </div>
       </div>
     </div>
   `).join('');
+}
+
+/* Devuelve solo el HTML interior de prod-actions para una card */
+function cardActionsHTML(id){
+  return (cart[id]
+    ? `<div class="qty-ctrl">
+         <button class="qty-btn" onclick="chQty('${id}',-1)">−</button>
+         <span class="qty-num">${cart[id]}</span>
+         <button class="qty-btn" onclick="chQty('${id}',1)">+</button>
+       </div>`
+    : `<button class="add-btn" onclick="addToCart('${id}')">+ Agregar</button>`
+  ) + `<button class="detail-btn" onclick="openComboModal('${id}')">Ver detalle</button>`;
+}
+
+/* Actualiza SOLO el bloque de acciones de una card, sin re-renderizar nada más */
+function renderCardActions(id){
+  const el = document.getElementById('actions-' + id);
+  if(el) el.innerHTML = cardActionsHTML(id);
 }
 
 function renderAllGrids(){
@@ -1973,7 +1983,7 @@ function showCat(cat, btn){
 function addToCart(id){
   cart[id] = (cart[id] || 0) + 1;
   updateCartUI();
-  renderAllGrids();
+  renderCardActions(id);
   const p = findProduct(id);
   toast(`✅ ${p.name} agregado al pedido`);
 }
@@ -1981,7 +1991,7 @@ function chQty(id, d){
   cart[id] = (cart[id] || 0) + d;
   if(cart[id] <= 0) delete cart[id];
   updateCartUI();
-  renderAllGrids();
+  renderCardActions(id);
 }
 
 function updateCartUI(){
@@ -2226,10 +2236,9 @@ function cmAddToCart() {
   if (!cmProductId) return;
   cart[cmProductId] = cmQtyVal;
   updateCartUI();
-  renderAllGrids();
+  renderCardActions(cmProductId);
   const p = findProduct(cmProductId);
   toast(`✅ ${p.name} x${cmQtyVal} agregado al pedido`);
-  // Close modal after adding
   document.getElementById('comboModalOverlay').classList.remove('open');
   document.body.style.overflow = '';
 }
