@@ -2353,216 +2353,291 @@ function selectDelivery(mode){
 }
 
 /* ════════════════════════════════════════
-   GENERADOR DE REMITO PDF
+   GENERADOR DE REMITO PDF  —  layout limpio
 ════════════════════════════════════════ */
 function generateRemitoPDF(orderData){
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-  const W = 210, margin = 18;
-  let y = 0;
+  const doc  = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W    = 210;
+  const H    = 297;
+  const M    = 14;           // margen lateral
+  const INN  = W - M * 2;   // ancho útil  182 mm
+  const R    = 3;            // radio esquinas
+  let   y    = 0;
 
-  // ── HEADER STRIP (fondo oscuro) ──
-  doc.setFillColor(26, 22, 18);
-  doc.rect(0, 0, W, 38, 'F');
+  /* ── helpers ── */
+  const txt = (s, x, ty, opt) => doc.text(String(s), x, ty, opt || {});
 
-  // Marca: "Fast" blanco + "Combos" dorado
+  // Trunca texto para que quepa en maxMM
+  const clip = (s, maxMM) => {
+    let t = String(s);
+    while(doc.getTextWidth(t) > maxMM && t.length > 5) t = t.slice(0,-1);
+    return t.length < String(s).length ? t.trimEnd()+'…' : t;
+  };
+
+  // Dibuja una caja rellena con texto etiqueta (pequeño, arriba-izq) y valor (grande, centrado vertical)
+  const box = (bx, by, bw, bh, fillRgb, strokeRgb, radius) => {
+    doc.setFillColor(...fillRgb);
+    if(strokeRgb){
+      doc.setDrawColor(...strokeRgb);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(bx, by, bw, bh, radius||R, radius||R, 'FD');
+    } else {
+      doc.roundedRect(bx, by, bw, bh, radius||R, radius||R, 'F');
+    }
+  };
+
+  /* ══════════════════════════════════════
+     HEADER  — fondo oscuro 46 mm
+  ══════════════════════════════════════ */
+  doc.setFillColor(26,22,18);
+  doc.rect(0, 0, W, 46, 'F');
+
+  // Línea dorada decorativa
+  doc.setFillColor(200,150,60);
+  doc.rect(0, 44, W, 2, 'F');
+
+  // Logo: Fast (blanco) + Combos (dorado)
   doc.setFont('helvetica','bold');
-  doc.setFontSize(26);
-  doc.setTextColor(250, 248, 243);
-  doc.text('Fast', margin, 22);
-  const fastW = doc.getTextWidth('Fast');
-  doc.setTextColor(200, 150, 60);
-  doc.text('Combos', margin + fastW + 1, 22);
+  doc.setFontSize(30);
+  doc.setTextColor(250,248,243);
+  const fastTxt = 'Fast';
+  const fastW   = doc.getTextWidth(fastTxt);
+  txt(fastTxt, M, 28);
+  doc.setTextColor(200,150,60);
+  txt('Combos', M + fastW + 1, 28);
 
   // Subtítulo
   doc.setFont('helvetica','normal');
-  doc.setFontSize(8);
-  doc.setTextColor(154, 143, 130);
-  doc.text('Rosario, Santa Fe — WhatsApp: +54 9 341 270-8638', margin, 30);
+  doc.setFontSize(7.5);
+  doc.setTextColor(130,120,108);
+  txt('Rosario, Santa Fe  ·  +54 9 341 270-8638', M, 38);
 
-  // Etiqueta ORDEN DE VENTA derecha
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(9);
-  doc.setTextColor(200, 150, 60);
-  doc.text('ORDEN DE VENTA', W - margin, 18, {align:'right'});
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(8);
-  doc.setTextColor(200, 200, 200);
-  const now = new Date();
+  // ORDEN DE VENTA — columna derecha
+  const now     = new Date();
   const dateStr = now.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
   const timeStr = now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-  doc.text(`Fecha: ${dateStr}  ${timeStr}`, W - margin, 25, {align:'right'});
-  doc.text(`N° ${String(Date.now()).slice(-6)}`, W - margin, 31, {align:'right'});
-
-  y = 46;
-
-  // ── DATOS DEL CLIENTE ──
-  doc.setFillColor(243, 239, 230);
-  doc.roundedRect(margin, y, W - margin*2, orderData.deliveryMode === 'envio' ? 28 : 22, 3, 3, 'F');
+  const nro     = String(Date.now()).slice(-6);
 
   doc.setFont('helvetica','bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(200,150,60);
+  txt('ORDEN DE VENTA', W-M, 20, {align:'right'});
+
+  doc.setFont('helvetica','normal');
   doc.setFontSize(7.5);
-  doc.setTextColor(154, 143, 130);
-  doc.text('DATOS DEL CLIENTE', margin + 5, y + 7);
+  doc.setTextColor(170,160,145);
+  txt(`Fecha: ${dateStr}   ${timeStr}`, W-M, 29, {align:'right'});
+  txt(`N\xB0 ${nro}`,                  W-M, 38, {align:'right'});
 
+  y = 54;
+
+  /* ══════════════════════════════════════
+     BLOQUE CLIENTE
+  ══════════════════════════════════════ */
+  const isEnvio  = orderData.deliveryMode === 'envio';
+  const clientH  = isEnvio ? 34 : 26;
+  const PAD      = 5;   // padding interno de la caja
+
+  box(M, y, INN, clientH, [243,239,230], [220,210,195]);
+
+  // Etiqueta sección (tope de la caja + PAD vertical)
   doc.setFont('helvetica','bold');
-  doc.setFontSize(10);
-  doc.setTextColor(26, 22, 18);
-  doc.text(orderData.name, margin + 5, y + 15);
+  doc.setFontSize(6.5);
+  doc.setTextColor(160,148,134);
+  txt('DATOS DEL CLIENTE', M+PAD, y+PAD+2);
 
-  if(orderData.deliveryMode === 'envio'){
+  // Nombre — baseline a y+PAD+10
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.setTextColor(26,22,18);
+  txt(clip(orderData.name, INN-PAD*2-4), M+PAD, y+PAD+11);
+
+  if(isEnvio){
     doc.setFont('helvetica','normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(74, 63, 53);
-    doc.text(`Dirección: ${orderData.address}`, margin + 5, y + 22);
-    doc.text(`Celular: ${orderData.phone}`, margin + 5, y + 28);
-    y += 36;
+    doc.setFontSize(8);
+    doc.setTextColor(74,63,53);
+    // Icono + texto  — bien dentro de la caja
+    txt('📍  '+clip(orderData.address, INN-PAD*2-8), M+PAD, y+PAD+20);
+    txt('📱  '+clip(orderData.phone,   INN-PAD*2-8), M+PAD, y+PAD+29);
   } else {
     doc.setFont('helvetica','normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(74, 63, 53);
-    doc.text('Modalidad: Retiro local', margin + 5, y + 22);
-    y += 30;
+    doc.setFontSize(8);
+    doc.setTextColor(74,63,53);
+    txt('🏪  Retiro local en Rosario', M+PAD, y+PAD+20);
   }
 
-  y += 4;
+  y += clientH + 7;
 
-  // ── TABLA DE PRODUCTOS ──
-  // Cabecera tabla
-  doc.setFillColor(26, 22, 18);
-  doc.rect(margin, y, W - margin*2, 8, 'F');
+  /* ══════════════════════════════════════
+     TABLA DE PRODUCTOS
+  ══════════════════════════════════════ */
+  // columnas: [nombre | cant | p.unit | subtotal]
+  const C_CANT  = 14;
+  const C_PUNIT = 38;
+  const C_SUB   = 38;
+  const C_NAME  = INN - C_CANT - C_PUNIT - C_SUB;   // ≈ 92 mm
+
+  // posiciones X de cada columna (right-edge para las numéricas)
+  const X_NAME  = M;
+  const X_CANT  = M + C_NAME + C_CANT;
+  const X_PUNIT = X_CANT + C_PUNIT;
+  const X_SUB   = M + INN;
+
+  const HEAD_H = 8;
+  const ROW_H  = 8.5;
+
+  // Cabecera oscura
+  doc.setFillColor(26,22,18);
+  doc.rect(M, y, INN, HEAD_H, 'F');
   doc.setFont('helvetica','bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(200, 150, 60);
-  doc.text('PRODUCTO', margin + 4, y + 5.5);
-  doc.text('CANT.', W - margin - 52, y + 5.5, {align:'right'});
-  doc.text('P.UNIT.', W - margin - 28, y + 5.5, {align:'right'});
-  doc.text('SUBTOTAL', W - margin - 2, y + 5.5, {align:'right'});
-  y += 8;
+  doc.setFontSize(7);
+  doc.setTextColor(200,150,60);
+  const HY = y + HEAD_H/2 + 2.5;  // baseline centrada verticalmente
+  txt('PRODUCTO',  X_NAME + 3,   HY);
+  txt('CANT.',     X_CANT  - 2,  HY, {align:'right'});
+  txt('P. UNITARIO', X_PUNIT-2,  HY, {align:'right'});
+  txt('SUBTOTAL',  X_SUB  - 2,   HY, {align:'right'});
+  y += HEAD_H;
 
-  // Filas
   let subtotal = 0;
-  orderData.items.forEach((item, i) => {
-    const rowH = 9;
-    const bg = i % 2 === 0 ? [255,255,255] : [250,247,242];
-    doc.setFillColor(...bg);
-    doc.rect(margin, y, W - margin*2, rowH, 'F');
+  orderData.items.forEach((item,i) => {
+    const isEven = i%2===0;
+    doc.setFillColor(...(isEven ? [255,255,255] : [250,247,243]));
+    doc.setDrawColor(232,224,212);
+    doc.setLineWidth(0.1);
+    doc.rect(M, y, INN, ROW_H, 'FD');
 
+    const RY = y + ROW_H/2 + 2.5;  // baseline centrada en la fila
+
+    // Nombre
     doc.setFont('helvetica','normal');
-    doc.setFontSize(7.8);
-    doc.setTextColor(26, 22, 18);
+    doc.setFontSize(7.5);
+    doc.setTextColor(26,22,18);
+    txt(clip(item.name, C_NAME-6), X_NAME+3, RY);
 
-    // Nombre truncado
-    const maxNameW = W - margin*2 - 72;
-    let name = item.name;
-    while(doc.getTextWidth(name) > maxNameW && name.length > 10){
-      name = name.slice(0, -1);
-    }
-    if(name !== item.name) name += '…';
-    doc.text(name, margin + 4, y + 6);
+    // Cantidad — centrada en su columna
+    doc.setTextColor(74,63,53);
+    txt(String(item.qty), X_CANT-2, RY, {align:'right'});
 
-    doc.text(String(item.qty), W - margin - 52, y + 6, {align:'right'});
-    doc.text(fmt(item.price), W - margin - 28, y + 6, {align:'right'});
+    // Precio unitario
+    txt(fmt(item.price), X_PUNIT-2, RY, {align:'right'});
+
+    // Subtotal — bold
     const lineTotal = item.price * item.qty;
     subtotal += lineTotal;
     doc.setFont('helvetica','bold');
-    doc.text(fmt(lineTotal), W - margin - 2, y + 6, {align:'right'});
-    y += rowH;
+    doc.setTextColor(26,22,18);
+    txt(fmt(lineTotal), X_SUB-2, RY, {align:'right'});
+
+    y += ROW_H;
   });
 
-  // Línea cierre tabla
-  doc.setDrawColor(226, 216, 200);
-  doc.line(margin, y, W - margin, y);
-  y += 6;
+  // Línea de cierre tabla
+  doc.setDrawColor(200,150,60);
+  doc.setLineWidth(0.5);
+  doc.line(M, y, M+INN, y);
+  doc.setLineWidth(0.2);
+  y += 8;
 
-  // ── TOTALES ──
-  const totalsX = W - margin - 70;
-  const totalsW = 70;
+  /* ══════════════════════════════════════
+     BLOQUE TOTALES
+  ══════════════════════════════════════ */
+  const TW   = 88;
+  const TX   = M + INN - TW;
+  const TPAD = 5;
 
-  const drawTotalRow = (label, value, bold, color) => {
-    if(bold){
-      doc.setFont('helvetica','bold');
-      doc.setFontSize(9);
-    } else {
-      doc.setFont('helvetica','normal');
-      doc.setFontSize(8);
-    }
-    doc.setTextColor(...(color || [74,63,53]));
-    doc.text(label, totalsX, y);
-    doc.text(value, W - margin - 2, y, {align:'right'});
-    y += 6;
+  // Fondo sutil para el bloque
+  box(TX, y-2, TW, (orderData.coupon ? 44 : 36), [248,245,240], [220,210,195]);
+
+  const drawTRow = (label, value, bold, rgb, size) => {
+    doc.setFont('helvetica', bold ? 'bold':'normal');
+    doc.setFontSize(size||8);
+    doc.setTextColor(...(rgb||[74,63,53]));
+    txt(label, TX+TPAD, y+4);
+    txt(value, TX+TW-TPAD, y+4, {align:'right'});
+    y += bold ? 8 : 7;
   };
 
-  drawTotalRow('Subtotal:', fmt(subtotal));
+  drawTRow('Subtotal:', fmt(subtotal));
 
   if(orderData.coupon){
     const disc = subtotal * orderData.coupon.discount;
-    drawTotalRow(
-      `Cupón ${orderData.coupon.label} (−${Math.round(orderData.coupon.discount*100)}%):`,
-      `−${fmt(disc)}`,
-      false, [46,125,50]
-    );
+    const pct  = Math.round(orderData.coupon.discount*100);
+    drawTRow(`Cupón ${orderData.coupon.label} (${pct}%):`, `-${fmt(disc)}`, false, [46,125,50]);
     subtotal -= disc;
   }
 
-  drawTotalRow('Envío:', 'A coordinar', false, [200,150,60]);
+  drawTRow('Envío:', 'A coordinar', false, [200,150,60]);
 
-  y += 2;
-  // Línea antes del total
-  doc.setDrawColor(200, 150, 60);
-  doc.setLineWidth(0.6);
-  doc.line(totalsX - 2, y, W - margin, y);
+  // Separador
+  doc.setDrawColor(200,150,60);
+  doc.setLineWidth(0.5);
+  doc.line(TX+TPAD, y, TX+TW-TPAD, y);
   doc.setLineWidth(0.2);
   y += 4;
 
-  // Total final con fondo dorado
-  doc.setFillColor(200, 150, 60);
-  doc.roundedRect(totalsX - 4, y - 4, totalsW + 4, 10, 2, 2, 'F');
+  // Caja TOTAL — altura fija 13 mm, texto perfectamente centrado
+  const TOT_H = 13;
+  doc.setFillColor(200,150,60);
+  doc.roundedRect(TX, y, TW, TOT_H, R, R, 'F');
   doc.setFont('helvetica','bold');
-  doc.setFontSize(11);
+  doc.setFontSize(11.5);
   doc.setTextColor(255,255,255);
-  doc.text('TOTAL:', totalsX, y + 3.5);
-  doc.text(fmt(subtotal), W - margin - 2, y + 3.5, {align:'right'});
-  y += 14;
+  const TY = y + TOT_H/2 + 3.8;  // baseline centrada vertical
+  txt('TOTAL:',      TX+TPAD,     TY);
+  txt(fmt(subtotal), TX+TW-TPAD,  TY, {align:'right'});
+  y += TOT_H + 10;
 
-  // ── NOTA ENVÍO ──
+  /* ══════════════════════════════════════
+     NOTA ENVÍO
+  ══════════════════════════════════════ */
   doc.setFont('helvetica','italic');
-  doc.setFontSize(8);
-  doc.setTextColor(154, 143, 130);
-  doc.text('* El costo de envío se coordina al confirmar el pedido.', margin, y);
-  y += 10;
+  doc.setFontSize(7.5);
+  doc.setTextColor(160,148,134);
+  txt('* El costo de envio se coordina con el vendedor al confirmar el pedido.', M, y);
 
-  // ── FOOTER ──
-  const pageH = 297;
-  doc.setFillColor(26, 22, 18);
-  doc.rect(0, pageH - 18, W, 18, 'F');
+  /* ══════════════════════════════════════
+     FOOTER
+  ══════════════════════════════════════ */
+  doc.setFillColor(26,22,18);
+  doc.rect(0, H-22, W, 22, 'F');
+  doc.setFillColor(200,150,60);
+  doc.rect(0, H-22, W, 2, 'F');
+
   doc.setFont('helvetica','normal');
   doc.setFontSize(7.5);
-  doc.setTextColor(154, 143, 130);
-  doc.text('FastCombos · Rosario, Santa Fe, Argentina · Lunes a Sábado 9–20 hs', W/2, pageH - 10, {align:'center'});
-  doc.setTextColor(200, 150, 60);
-  doc.text('¡Gracias por tu pedido!', W/2, pageH - 5, {align:'center'});
+  doc.setTextColor(130,120,108);
+  txt('FastCombos  ·  Rosario, Santa Fe  ·  Lun a Sab 9–20 hs  ·  +54 9 341 270-8638', W/2, H-12, {align:'center'});
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.setTextColor(200,150,60);
+  txt('¡Gracias por tu pedido!', W/2, H-5, {align:'center'});
 
   return doc;
 }
 
 /* ════════════════════════════════════════
-   WHATSAPP
+   WHATSAPP → primero WA, luego PDF
 ════════════════════════════════════════ */
 function sendWhatsApp(){
+  // ── Validaciones ──
   const name = document.getElementById('clientName').value.trim();
   if(!name){ toast('⚠️ Por favor ingresá tu nombre'); document.getElementById('clientName').focus(); return; }
   if(!deliveryMode){ toast('⚠️ Seleccioná envío o retiro local'); return; }
+
   let addr = '', phone = '';
   if(deliveryMode === 'envio'){
-    addr = document.getElementById('clientAddress').value.trim();
+    addr  = document.getElementById('clientAddress').value.trim();
     phone = document.getElementById('clientPhone').value.trim();
-    if(!addr){ toast('⚠️ Ingresá tu dirección de entrega'); document.getElementById('clientAddress').focus(); return; }
-    if(!phone){ toast('⚠️ Ingresá tu número de celular'); document.getElementById('clientPhone').focus(); return; }
+    if(!addr){  toast('⚠️ Ingresá tu dirección de entrega'); document.getElementById('clientAddress').focus(); return; }
+    if(!phone){ toast('⚠️ Ingresá tu número de celular');    document.getElementById('clientPhone').focus();   return; }
   }
+
   const keys = Object.keys(cart);
   if(!keys.length){ toast('⚠️ Tu pedido está vacío'); return; }
 
+  // ── Armar datos ──
   let subtotal = 0;
   const itemsData = keys.map(id => {
     const p = findProduct(id);
@@ -2571,20 +2646,20 @@ function sendWhatsApp(){
     return { name: p.name, qty, price: p.price };
   });
 
-  const lines = itemsData.map(it => `  • ${it.name} x${it.qty}  →  ${fmt(it.price * it.qty)}`).join('\n');
-
   const discountAmt = appliedCoupon ? subtotal * appliedCoupon.discount : 0;
-  const total = subtotal - discountAmt;
+  const total       = subtotal - discountAmt;
+
+  const lines = itemsData
+    .map(it => `  • ${it.name} x${it.qty}  →  ${fmt(it.price * it.qty)}`)
+    .join('\n');
+
   const couponLine = appliedCoupon
     ? `\n🏷️ *Cupón:* ${appliedCoupon.label} (−${Math.round(appliedCoupon.discount*100)}%)  →  −${fmt(discountAmt)}`
     : '';
 
-  let deliveryLine = '';
-  if(deliveryMode === 'envio'){
-    deliveryLine = `📍 *Dirección:* ${addr}\n📱 *Celular:* ${phone}`;
-  } else {
-    deliveryLine = `🏪 *Modalidad:* Retiro local`;
-  }
+  const deliveryLine = deliveryMode === 'envio'
+    ? `📍 *Dirección:* ${addr}\n📱 *Celular:* ${phone}`
+    : `🏪 *Modalidad:* Retiro local`;
 
   const msg =
 `🛒 *NUEVO PEDIDO — FASTCOMBOS*
@@ -2600,26 +2675,30 @@ ${lines}
 ━━━━━━━━━━━━━━━━━━━━━━
 ¡Espero su confirmación! 😊`;
 
-  // Generar PDF remito
-  try {
-    if(window.jspdf){
-      const orderData = {
-        name, address: addr, phone,
-        deliveryMode,
-        items: itemsData,
-        coupon: appliedCoupon || null
-      };
-      const doc = generateRemitoPDF(orderData);
-      doc.save(`Remito_FastCombos_${name.replace(/\s+/g,'_')}.pdf`);
-      toast('📄 Remito descargado correctamente');
-    }
-  } catch(e){
-    console.warn('PDF generation failed:', e);
-  }
+  // 1️⃣ PRIMERO: capturar datos del pedido para el PDF ANTES de abrir WA
+  const orderData = {
+    name, address: addr, phone,
+    deliveryMode,
+    items: itemsData,
+    coupon: appliedCoupon || null
+  };
 
+  // 2️⃣ Abrir WhatsApp de forma SINCRÓNICA (dentro del evento click)
+  window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+
+  // 3️⃣ PDF generado con delay generoso para que WA cargue primero
+  toast('✅ Pedido enviado. Generando remito…');
   setTimeout(() => {
-    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-  }, 600);
+    try {
+      if(window.jspdf){
+        const pdfDoc = generateRemitoPDF(orderData);
+        pdfDoc.save(`Remito_FastCombos_${name.replace(/\s+/g,'_')}.pdf`);
+        toast('📄 Remito descargado correctamente');
+      }
+    } catch(e){
+      console.warn('PDF error:', e);
+    }
+  }, 2000);
 }
 
 /* ════════════════════════════════════════
