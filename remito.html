@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orden de Venta — FastCombos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════
+   VARIABLES & RESET
+══════════════════════════════════════ */
+:root{
+  --cream:  #faf8f3;
+  --cream2: #f3efe6;
+  --dark:   #1a1612;
+  --dark2:  #2a231b;
+  --mid:    #4a3f35;
+  --gold:   #c8963c;
+  --gold2:  #e8b45a;
+  --border: #e2d8c8;
+  --muted:  #9a8f82;
+  --green:  #2e7d32;
+  --red:    #c0392b;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:#eee9e0;
+  font-family:'Jost',sans-serif;
+  font-weight:300;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:2rem 1rem 4rem;
+}
+img{max-width:100%;}
+
+/* ══════════════════════════════════════
+   TOP ACTION BAR (no se imprime)
+══════════════════════════════════════ */
+.action-bar{
+  width:100%;max-width:780px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:1rem;margin-bottom:1.5rem;
+  flex-wrap:wrap;
+}
+.action-bar-brand{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.5rem;font-weight:700;
+  color:var(--dark);text-decoration:none;
+  display:flex;align-items:baseline;gap:2px;
+}
+.action-bar-brand em{color:var(--gold);font-style:italic;}
+
+.action-bar-right{display:flex;gap:.7rem;flex-wrap:wrap;}
+
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  border-radius:10px;font-family:'Jost',sans-serif;
+  font-size:.85rem;font-weight:500;
+  padding:.65rem 1.3rem;cursor:pointer;border:none;
+  transition:all .18s;letter-spacing:.03em;
+  white-space:nowrap;
+}
+.btn-dark{background:var(--dark);color:var(--cream);}
+.btn-dark:hover{background:var(--dark2);}
+.btn-gold{background:var(--gold);color:#fff;}
+.btn-gold:hover{background:var(--gold2);box-shadow:0 4px 16px rgba(200,150,60,.3);}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--mid);}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold);}
+
+/* ══════════════════════════════════════
+   REMITO CARD (la hoja del remito)
+══════════════════════════════════════ */
+.remito{
+  width:100%;max-width:780px;
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 8px 40px rgba(0,0,0,.12);
+  overflow:hidden;
+}
+
+/* ─── HEADER ─── */
+.rem-header{
+  background:var(--dark);
+  padding:2rem 2.5rem 1.8rem;
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:1.5rem;
+  position:relative;
+  overflow:hidden;
+}
+.rem-header::after{
+  content:'';
+  position:absolute;bottom:0;left:0;right:0;
+  height:3px;background:var(--gold);
+}
+.rem-header-left{}
+.rem-brand{
+  font-family:'Cormorant Garamond',serif;
+  font-size:2.4rem;font-weight:700;
+  line-height:1;margin-bottom:.35rem;
+  display:flex;align-items:baseline;gap:3px;
+}
+.rem-brand span:first-child{color:#faf8f3;}
+.rem-brand span:last-child{color:var(--gold);}
+.rem-brand-sub{
+  font-size:.75rem;font-weight:400;
+  color:rgba(250,248,243,.45);
+  letter-spacing:.04em;
+}
+
+.rem-header-right{
+  text-align:right;flex-shrink:0;
+}
+.rem-label{
+  font-size:.65rem;font-weight:600;
+  letter-spacing:.25em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:.4rem;
+}
+.rem-nro{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.8rem;font-weight:700;
+  color:#faf8f3;line-height:1;
+}
+.rem-fecha{
+  font-size:.78rem;color:rgba(250,248,243,.5);
+  margin-top:.3rem;
+}
+
+/* ─── CLIENTE ─── */
+.rem-client{
+  padding:1.5rem 2.5rem;
+  background:var(--cream2);
+  border-bottom:1px solid var(--border);
+  display:grid;grid-template-columns:1fr auto;
+  gap:1rem;align-items:start;
+}
+.rem-section-label{
+  font-size:.65rem;font-weight:600;
+  letter-spacing:.25em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:.5rem;
+}
+.rem-client-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.6rem;font-weight:700;
+  color:var(--dark);line-height:1.2;
+  margin-bottom:.4rem;
+}
+.rem-client-detail{
+  display:flex;flex-direction:column;gap:.3rem;
+}
+.rem-client-row{
+  display:flex;align-items:center;gap:.5rem;
+  font-size:.85rem;color:var(--mid);
+}
+.rem-client-row strong{color:var(--dark);font-weight:500;}
+
+.rem-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(200,150,60,.1);border:1px solid rgba(200,150,60,.25);
+  border-radius:20px;padding:.35rem .9rem;
+  font-size:.75rem;font-weight:500;color:var(--gold);
+  white-space:nowrap;
+}
+
+/* ─── TABLA PRODUCTOS ─── */
+.rem-table-wrap{
+  padding:1.5rem 2.5rem;
+}
+.rem-table{
+  width:100%;border-collapse:collapse;
+}
+.rem-table thead tr{
+  background:var(--dark);
+}
+.rem-table thead th{
+  font-family:'Jost',sans-serif;
+  font-size:.68rem;font-weight:600;
+  letter-spacing:.15em;text-transform:uppercase;
+  color:var(--gold);
+  padding:.7rem .8rem;
+  white-space:nowrap;
+}
+.rem-table thead th:first-child{
+  text-align:left;border-radius:6px 0 0 6px;
+  padding-left:1rem;
+}
+.rem-table thead th:last-child{border-radius:0 6px 6px 0;}
+.rem-table thead th:not(:first-child){text-align:right;}
+
+.rem-table tbody tr:nth-child(even){background:var(--cream2);}
+.rem-table tbody tr:nth-child(odd){background:#fff;}
+.rem-table tbody tr:hover{background:rgba(200,150,60,.05);}
+
+.rem-table tbody td{
+  padding:.75rem .8rem;
+  font-size:.85rem;color:var(--mid);
+  border-bottom:1px solid var(--border);
+}
+.rem-table tbody td:first-child{
+  color:var(--dark);font-weight:500;
+  padding-left:1rem;max-width:340px;
+  line-height:1.4;
+}
+.rem-table tbody td:not(:first-child){text-align:right;white-space:nowrap;}
+.rem-table tbody td.td-bold{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1rem;font-weight:700;
+  color:var(--dark);
+}
+.rem-table tbody tr:last-child td{border-bottom:none;}
+
+/* ─── TOTALES ─── */
+.rem-totals{
+  padding:0 2.5rem 1.5rem;
+  display:flex;justify-content:flex-end;
+}
+.rem-totals-box{
+  width:min(320px,100%);
+  background:var(--cream2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+}
+.rem-total-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:.6rem 1.1rem;
+  font-size:.85rem;color:var(--mid);
+  border-bottom:1px solid var(--border);
+}
+.rem-total-row:last-child{border-bottom:none;}
+.rem-total-row.discount{color:var(--green);}
+.rem-total-row.envio{color:var(--gold);}
+.rem-total-row.main{
+  background:var(--dark);
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.3rem;font-weight:700;
+  color:#faf8f3;padding:.85rem 1.1rem;
+}
+.rem-total-row.main span:last-child{color:var(--gold);}
+
+/* ─── NOTA ─── */
+.rem-note{
+  margin:0 2.5rem 1.5rem;
+  padding:.75rem 1rem;
+  background:rgba(200,150,60,.07);
+  border:1px solid rgba(200,150,60,.2);
+  border-radius:8px;
+  font-size:.78rem;color:var(--mid);
+  line-height:1.6;
+}
+.rem-note strong{color:var(--gold);}
+
+/* ─── FOOTER DEL REMITO ─── */
+.rem-footer{
+  background:var(--dark);
+  padding:1.2rem 2.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:1rem;flex-wrap:wrap;
+  border-top:3px solid var(--gold);
+}
+.rem-footer-txt{
+  font-size:.75rem;color:rgba(250,248,243,.45);
+  line-height:1.7;
+}
+.rem-footer-txt strong{color:var(--gold2);}
+.rem-footer-thanks{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.05rem;font-weight:700;
+  color:var(--gold);font-style:italic;
+}
+
+/* ─── ERROR ─── */
+.error-card{
+  width:100%;max-width:480px;
+  background:#fff;border-radius:16px;
+  padding:3rem 2rem;text-align:center;
+  box-shadow:0 8px 40px rgba(0,0,0,.1);
+}
+.error-card .ico{font-size:3rem;margin-bottom:1rem;}
+.error-card h2{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.5rem;font-weight:700;margin-bottom:.6rem;color:var(--dark);
+}
+.error-card p{font-size:.88rem;color:var(--muted);line-height:1.7;}
+
+/* ══════════════════════════════════════
+   PRINT STYLES
+══════════════════════════════════════ */
+@media print{
+  body{
+    background:#fff !important;
+    padding:0;
+  }
+  .action-bar{ display:none !important; }
+  .remito{
+    border-radius:0;
+    box-shadow:none;
+    max-width:100%;
+    width:100%;
+  }
+  .rem-table tbody tr:hover{background:inherit;}
+  @page{
+    margin:10mm 12mm;
+    size:A4 portrait;
+  }
+}
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+@media(max-width:640px){
+  body{padding:1rem .5rem 3rem;}
+  .action-bar{flex-direction:column;align-items:stretch;}
+  .action-bar-right{justify-content:stretch;}
+  .action-bar-right .btn{flex:1;justify-content:center;}
+  .rem-header{padding:1.5rem 1.25rem 1.3rem;flex-direction:column;gap:.75rem;}
+  .rem-header-right{text-align:left;}
+  .rem-client{padding:1.25rem;grid-template-columns:1fr;}
+  .rem-table-wrap{padding:1.25rem;}
+  .rem-table thead th{font-size:.62rem;padding:.6rem .5rem;}
+  .rem-table thead th:first-child{padding-left:.6rem;}
+  .rem-table tbody td{font-size:.8rem;padding:.6rem .5rem;}
+  .rem-table tbody td:first-child{padding-left:.6rem;}
+  .rem-totals{padding:0 1.25rem 1.25rem;}
+  .rem-note{margin:0 1.25rem 1.25rem;}
+  .rem-footer{padding:1rem 1.25rem;}
+  .rem-brand{font-size:1.8rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ACTION BAR (solo en pantalla, no en impresión) -->
+<div class="action-bar" id="actionBar">
+  <a href="index.html" class="action-bar-brand">
+    <span>Fast</span><em>Combos</em>
+  </a>
+  <div class="action-bar-right">
+    <button class="btn btn-outline" onclick="window.history.back()">← Volver</button>
+    <button class="btn btn-gold" onclick="window.print()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Imprimir / Guardar PDF
+    </button>
+  </div>
+</div>
+
+<!-- CONTENIDO DINÁMICO -->
+<div id="root"></div>
+
+<script>
+/* ════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════ */
+const fmt = n => '$' + Math.round(n).toLocaleString('es-AR');
+
+function decode(){
+  try{
+    const hash = location.hash.slice(1);
+    if(!hash) return null;
+    return JSON.parse(decodeURIComponent(escape(atob(hash))));
+  }catch(e){
+    return null;
+  }
+}
+
+/* ════════════════════════════════════════
+   RENDER
+════════════════════════════════════════ */
+function render(){
+  const root = document.getElementById('root');
+  const d    = decode();
+
+  if(!d){
+    root.innerHTML = `
+      <div class="error-card">
+        <div class="ico">🔗</div>
+        <h2>Link inválido o expirado</h2>
+        <p>Este link de remito no contiene datos de pedido válidos.<br>
+        Verificá que el link esté completo o pedí uno nuevo desde la tienda.</p>
+        <br>
+        <a href="index.html" style="color:var(--gold);font-size:.88rem;font-weight:500;">← Ir a FastCombos</a>
+      </div>`;
+    return;
+  }
+
+  // ── calcular totales ──
+  let subtotal = 0;
+  d.items.forEach(it => subtotal += it.price * it.qty);
+  const discAmt = d.coupon ? subtotal * d.coupon.discount : 0;
+  const total   = subtotal - discAmt;
+
+  // ── filas de productos ──
+  const rows = d.items.map(it => `
+    <tr>
+      <td>${it.name}</td>
+      <td>${it.qty}</td>
+      <td>${fmt(it.price)}</td>
+      <td class="td-bold">${fmt(it.price * it.qty)}</td>
+    </tr>`).join('');
+
+  // ── fila descuento ──
+  const discRow = d.coupon ? `
+    <div class="rem-total-row discount">
+      <span>🏷️ Cupón ${d.coupon.label} (−${Math.round(d.coupon.discount*100)}%)</span>
+      <span>−${fmt(discAmt)}</span>
+    </div>` : '';
+
+  // ── entrega ──
+  const entregaRows = d.deliveryMode === 'envio'
+    ? `<div class="rem-client-row">📍 <strong>Dirección:</strong> ${d.address || '—'}</div>
+       <div class="rem-client-row">📱 <strong>Celular:</strong> ${d.phone || '—'}</div>`
+    : `<div class="rem-client-row">🏪 <strong>Modalidad:</strong> Retiro local en Rosario</div>`;
+
+  // ── badge entrega ──
+  const modoBadge = d.deliveryMode === 'envio'
+    ? `<div class="rem-badge">🚚 Envío a domicilio</div>`
+    : `<div class="rem-badge">🏪 Retiro local</div>`;
+
+  document.title = `Remito N°${d.nro} — ${d.name} — FastCombos`;
+
+  root.innerHTML = `
+  <div class="remito">
+
+    <!-- HEADER -->
+    <div class="rem-header">
+      <div class="rem-header-left">
+        <div class="rem-brand">
+          <span>Fast</span><span>Combos</span>
+        </div>
+        <div class="rem-brand-sub">Rosario, Santa Fe · +54 9 341 270-8638 · Lun–Sáb 9–20 hs</div>
+      </div>
+      <div class="rem-header-right">
+        <div class="rem-label">Orden de Venta</div>
+        <div class="rem-nro">N° ${d.nro}</div>
+        <div class="rem-fecha">${d.fecha} · ${d.hora}</div>
+      </div>
+    </div>
+
+    <!-- CLIENTE -->
+    <div class="rem-client">
+      <div>
+        <div class="rem-section-label">Datos del cliente</div>
+        <div class="rem-client-name">${d.name}</div>
+        <div class="rem-client-detail">
+          ${entregaRows}
+        </div>
+      </div>
+      <div>${modoBadge}</div>
+    </div>
+
+    <!-- TABLA -->
+    <div class="rem-table-wrap">
+      <div class="rem-section-label" style="margin-bottom:.75rem;">Detalle del pedido</div>
+      <table class="rem-table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cant.</th>
+            <th>P. Unit.</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TOTALES -->
+    <div class="rem-totals">
+      <div class="rem-totals-box">
+        <div class="rem-total-row">
+          <span>Subtotal</span><span>${fmt(subtotal)}</span>
+        </div>
+        ${discRow}
+        <div class="rem-total-row envio">
+          <span>🚚 Envío</span><span>A coordinar</span>
+        </div>
+        <div class="rem-total-row main">
+          <span>Total</span><span>${fmt(total)}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTA -->
+    <div class="rem-note">
+      <strong>📌 Nota:</strong> El costo de envío se coordina con el vendedor al confirmar el pedido. Este documento es una orden de venta generada automáticamente y no reemplaza una factura oficial.
+    </div>
+
+    <!-- FOOTER -->
+    <div class="rem-footer">
+      <div class="rem-footer-txt">
+        <strong>FastCombos</strong><br>
+        Rosario, Santa Fe, Argentina<br>
+        Lunes a Sábado de 9 a 20 hs
+      </div>
+      <div class="rem-footer-thanks">¡Gracias por tu pedido!</div>
+    </div>
+
+  </div>`;
+}
+
+render();
+</script>
+</body>
+</html>
