@@ -6,6 +6,7 @@
 <title>FastCombos — Combos de calidad a tu puerta</title>
 <meta name="description" content="Armá tu combo ideal de alimentos, golosinas, galletitas y cotillón. Entrega a domicilio o retiro local en Rosario.">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -593,6 +594,7 @@ nav{
 .btn-wa-send:hover{background:var(--wa2);box-shadow:0 4px 20px rgba(37,211,102,.3);}
 .btn-wa-send:disabled{background:#bbb;cursor:not-allowed;}
 .btn-wa-send svg{width:20px;height:20px;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
 /* ════════════════════════════════════════
    WHY US
@@ -2756,9 +2758,27 @@ function generateRemitoPDF(orderData){
 }
 
 /* ════════════════════════════════════════
-   WHATSAPP + LINK AL REMITO
+   URL SHORTENER  (is.gd — gratis, sin auth)
 ════════════════════════════════════════ */
-function sendWhatsApp(){
+async function shortenURL(longUrl){
+  try{
+    const res = await fetch(
+      `https://is.gd/create.php?format=simple&url=${encodeURIComponent(longUrl)}`,
+      { signal: AbortSignal.timeout(4000) }
+    );
+    if(res.ok){
+      const short = (await res.text()).trim();
+      if(short.startsWith('https://is.gd/') || short.startsWith('http://is.gd/')) return short;
+    }
+  }catch(e){ /* silencioso — usamos la URL larga */ }
+  return longUrl;
+}
+
+/* ════════════════════════════════════════
+   WHATSAPP + LINK AL REMITO (URL CORTA)
+════════════════════════════════════════ */
+async function sendWhatsApp(){
+  // ── Validaciones ──
   const name = document.getElementById('clientName').value.trim();
   if(!name){ toast('⚠️ Por favor ingresá tu nombre'); document.getElementById('clientName').focus(); return; }
   if(!deliveryMode){ toast('⚠️ Seleccioná envío o retiro local'); return; }
@@ -2782,37 +2802,34 @@ function sendWhatsApp(){
     subtotal += p.price * qty;
     return { name: p.name, qty, price: p.price };
   });
-
   const discountAmt = appliedCoupon ? subtotal * appliedCoupon.discount : 0;
   const total       = subtotal - discountAmt;
 
-  // ── Codificar pedido en URL para remito.html ──
-  const orderPayload = {
-    name, address: addr, phone,
-    deliveryMode,
-    items: itemsData,
-    coupon: appliedCoupon || null,
-    nro: String(Date.now()).slice(-6),
-    fecha: new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}),
-    hora:  new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})
+  // ── Codificar pedido → remito.html (LZString, claves cortas) ──
+  const payload = {
+    n:  name, a: addr, p: phone, m: deliveryMode,
+    i:  itemsData.map(it => [it.name, it.qty, it.price]),
+    c:  appliedCoupon ? [appliedCoupon.label, appliedCoupon.discount] : null,
+    nr: String(Date.now()).slice(-6),
+    f:  new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}),
+    h:  new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})
   };
-  const encoded    = btoa(unescape(encodeURIComponent(JSON.stringify(orderPayload))));
-  const remitoURL  = `${location.origin}${location.pathname.replace('index.html','').replace(/\/[^/]*$/,'/')  }remito.html#${encoded}`;
+  const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(payload));
+  const base       = location.origin + location.pathname.replace(/[^/]*$/, '');
+  const longURL    = `${base}remito.html#${compressed}`;
 
-  // ── Texto WhatsApp con link al remito ──
+  // ── Construir texto WA (placeholder mientras acortamos) ──
   const lines = itemsData
     .map(it => `  • ${it.name} x${it.qty}  →  ${fmt(it.price * it.qty)}`)
     .join('\n');
-
   const couponLine = appliedCoupon
     ? `\n🏷️ *Cupón:* ${appliedCoupon.label} (−${Math.round(appliedCoupon.discount*100)}%)  →  −${fmt(discountAmt)}`
     : '';
-
   const deliveryLine = deliveryMode === 'envio'
     ? `📍 *Dirección:* ${addr}\n📱 *Celular:* ${phone}`
     : `🏪 *Modalidad:* Retiro local`;
 
-  const msg =
+  const buildMsg = remitoLink =>
 `🛒 *NUEVO PEDIDO — FASTCOMBOS*
 ━━━━━━━━━━━━━━━━━━━━━━
 👤 *Cliente:* ${name}
@@ -2824,14 +2841,42 @@ ${lines}
 💰 *TOTAL:* ${fmt(total)}
 🚚 El costo de envío se coordina al confirmar
 ━━━━━━━━━━━━━━━━━━━━━━
-📄 *Orden de venta:*
-${remitoURL}
+📄 *Ver orden de venta:* ${remitoLink}
 ━━━━━━━━━━━━━━━━━━━━━━
 ¡Espero su confirmación! 😊`;
 
-  // Abrir WhatsApp (sincrónico, en el evento click)
-  window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-  toast('✅ Pedido enviado con link al remito');
+  // ── 1. Abrir pestaña en blanco SINCRÓNICAMENTE (evita popup blocker) ──
+  const waTab = window.open('about:blank', '_blank');
+
+  // ── 2. Mostrar estado de carga en el botón ──
+  const btn = document.getElementById('btnWaSend');
+  const originalHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span style="display:flex;align-items:center;gap:8px">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+      stroke-linecap="round" stroke-linejoin="round"
+      style="animation:spin .8s linear infinite">
+      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+    </svg>
+    Acortando link…
+  </span>`;
+
+  // ── 3. Acortar URL (máx 4 seg, luego fallback a larga) ──
+  const shortURL = await shortenURL(longURL);
+
+  // ── 4. Restaurar botón ──
+  btn.innerHTML = originalHTML;
+  btn.disabled  = false;
+
+  // ── 5. Navegar la pestaña ya abierta a WhatsApp ──
+  if(waTab){
+    waTab.location.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(buildMsg(shortURL))}`;
+  } else {
+    // Fallback si el navegador bloqueó la pestaña
+    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(buildMsg(shortURL))}`, '_blank');
+  }
+
+  toast('✅ Pedido enviado — link al remito incluido');
 }
 
 /* ════════════════════════════════════════

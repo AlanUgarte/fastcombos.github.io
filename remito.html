@@ -6,6 +6,7 @@
 <title>Orden de Venta — FastCombos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 <style>
 /* ══════════════════════════════════════
    VARIABLES & RESET
@@ -350,6 +351,7 @@ img{max-width:100%;}
 <!-- CONTENIDO DINÁMICO -->
 <div id="root"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 <script>
 /* ════════════════════════════════════════
    HELPERS
@@ -360,7 +362,39 @@ function decode(){
   try{
     const hash = location.hash.slice(1);
     if(!hash) return null;
-    return JSON.parse(decodeURIComponent(escape(atob(hash))));
+
+    // Intentar descomprimir con LZ-String (nuevo formato)
+    let raw = LZString.decompressFromEncodedURIComponent(hash);
+
+    // Fallback: base64 clásico (formato viejo)
+    if(!raw) raw = decodeURIComponent(escape(atob(hash)));
+
+    const d = JSON.parse(raw);
+
+    // Normalizar claves cortas → claves largas
+    if(d.n !== undefined && d.i !== undefined){
+      return {
+        name:         d.n,
+        address:      d.a || '',
+        phone:        d.p || '',
+        deliveryMode: d.m,
+        // items puede ser array de arrays [nombre,qty,precio] o array de objetos {n,q,v}
+        items: (d.i || []).map(it => Array.isArray(it)
+          ? { name: it[0], qty: it[1], price: it[2] }
+          : { name: it.n,  qty: it.q,  price: it.v }),
+        // coupon puede ser array [label,discount] u objeto {l,d}
+        coupon: d.c
+          ? Array.isArray(d.c)
+            ? { label: d.c[0], discount: d.c[1] }
+            : { label: d.c.l,  discount: d.c.d }
+          : null,
+        nro:   d.nr,
+        fecha: d.f,
+        hora:  d.h
+      };
+    }
+    // Ya tiene claves largas (formato viejo)
+    return d;
   }catch(e){
     return null;
   }
