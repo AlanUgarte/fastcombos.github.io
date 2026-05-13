@@ -330,6 +330,7 @@ img{max-width:100%;}
   .rem-footer{padding:1rem 1.25rem;}
   .rem-brand{font-size:1.8rem;}
 }
+@keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
@@ -353,80 +354,89 @@ img{max-width:100%;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 <script>
-/* ════════════════════════════════════════
-   HELPERS
-════════════════════════════════════════ */
 const fmt = n => '$' + Math.round(n).toLocaleString('es-AR');
 
-function decode(){
-  try{
-    const hash = location.hash.slice(1);
-    if(!hash) return null;
-
-    // Intentar descomprimir con LZ-String (nuevo formato)
-    let raw = LZString.decompressFromEncodedURIComponent(hash);
-
-    // Fallback: base64 clásico (formato viejo)
-    if(!raw) raw = decodeURIComponent(escape(atob(hash)));
-
-    const d = JSON.parse(raw);
-
-    // Normalizar claves cortas → claves largas
-    if(d.n !== undefined && d.i !== undefined){
-      return {
-        name:         d.n,
-        address:      d.a || '',
-        phone:        d.p || '',
-        deliveryMode: d.m,
-        // items puede ser array de arrays [nombre,qty,precio] o array de objetos {n,q,v}
-        items: (d.i || []).map(it => Array.isArray(it)
-          ? { name: it[0], qty: it[1], price: it[2] }
-          : { name: it.n,  qty: it.q,  price: it.v }),
-        // coupon puede ser array [label,discount] u objeto {l,d}
-        coupon: d.c
-          ? Array.isArray(d.c)
-            ? { label: d.c[0], discount: d.c[1] }
-            : { label: d.c.l,  discount: d.c.d }
-          : null,
-        nro:   d.nr,
-        fecha: d.f,
-        hora:  d.h
-      };
-    }
-    // Ya tiene claves largas (formato viejo)
-    return d;
-  }catch(e){
-    return null;
+/* ── Normaliza objeto sin importar formato de claves ── */
+function normalize(d){
+  if(!d) return null;
+  if(d.n !== undefined){
+    return {
+      name: d.n||'', address: d.a||'', phone: d.p||'',
+      deliveryMode: d.m||'retiro',
+      items: (d.i||[]).map(it => Array.isArray(it)
+        ? {name:it[0],qty:it[1],price:it[2]}
+        : {name:it.n, qty:it.q, price:it.v}),
+      coupon: d.c ? (Array.isArray(d.c)
+        ? {label:d.c[0],discount:d.c[1]}
+        : {label:d.c.l, discount:d.c.d}) : null,
+      nro:d.nr, fecha:d.f, hora:d.h
+    };
   }
+  return d;
 }
 
-/* ════════════════════════════════════════
-   RENDER
-════════════════════════════════════════ */
-function render(){
+/* ── Carga el pedido desde jsonblob o hash ── */
+async function loadOrder(){
   const root = document.getElementById('root');
-  const d    = decode();
 
+  // Mostrar spinner mientras carga
+  root.innerHTML = `
+    <div style="text-align:center;padding:4rem 2rem;color:var(--muted)">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gold)"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        style="animation:spin .9s linear infinite;margin-bottom:1rem">
+        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+      </svg>
+      <p style="font-size:.9rem">Cargando orden de venta…</p>
+    </div>`;
+
+  // 1️⃣ ?id=  →  jsonblob.com
+  const id = new URLSearchParams(location.search).get('id');
+  if(id){
+    try{
+      const res = await fetch(`https://jsonblob.com/api/jsonBlob/${id}`,{
+        headers:{Accept:'application/json'},
+        signal:AbortSignal.timeout(7000)
+      });
+      if(res.ok){ render(normalize(await res.json())); return; }
+    }catch(e){}
+  }
+
+  // 2️⃣ #hash  →  LZString
+  const hash = location.hash.slice(1);
+  if(hash){
+    try{
+      const lz = LZString.decompressFromEncodedURIComponent(hash);
+      if(lz){ render(normalize(JSON.parse(lz))); return; }
+    }catch(_){}
+    try{ render(normalize(JSON.parse(decodeURIComponent(escape(atob(hash)))))); return; }
+    catch(_){}
+  }
+
+  render(null);
+}
+
+/* ── Renderiza el remito ── */
+function render(d){
+  const root = document.getElementById('root');
   if(!d){
     root.innerHTML = `
       <div class="error-card">
         <div class="ico">🔗</div>
         <h2>Link inválido o expirado</h2>
-        <p>Este link de remito no contiene datos de pedido válidos.<br>
-        Verificá que el link esté completo o pedí uno nuevo desde la tienda.</p>
+        <p>Este link de remito no contiene datos válidos.<br>
+        Verificá que esté completo o generá uno nuevo desde la tienda.</p>
         <br>
         <a href="index.html" style="color:var(--gold);font-size:.88rem;font-weight:500;">← Ir a FastCombos</a>
       </div>`;
     return;
   }
 
-  // ── calcular totales ──
   let subtotal = 0;
   d.items.forEach(it => subtotal += it.price * it.qty);
   const discAmt = d.coupon ? subtotal * d.coupon.discount : 0;
   const total   = subtotal - discAmt;
 
-  // ── filas de productos ──
   const rows = d.items.map(it => `
     <tr>
       <td>${it.name}</td>
@@ -435,20 +445,17 @@ function render(){
       <td class="td-bold">${fmt(it.price * it.qty)}</td>
     </tr>`).join('');
 
-  // ── fila descuento ──
   const discRow = d.coupon ? `
     <div class="rem-total-row discount">
       <span>🏷️ Cupón ${d.coupon.label} (−${Math.round(d.coupon.discount*100)}%)</span>
       <span>−${fmt(discAmt)}</span>
     </div>` : '';
 
-  // ── entrega ──
   const entregaRows = d.deliveryMode === 'envio'
-    ? `<div class="rem-client-row">📍 <strong>Dirección:</strong> ${d.address || '—'}</div>
-       <div class="rem-client-row">📱 <strong>Celular:</strong> ${d.phone || '—'}</div>`
+    ? `<div class="rem-client-row">📍 <strong>Dirección:</strong> ${d.address||'—'}</div>
+       <div class="rem-client-row">📱 <strong>Celular:</strong> ${d.phone||'—'}</div>`
     : `<div class="rem-client-row">🏪 <strong>Modalidad:</strong> Retiro local en Rosario</div>`;
 
-  // ── badge entrega ──
   const modoBadge = d.deliveryMode === 'envio'
     ? `<div class="rem-badge">🚚 Envío a domicilio</div>`
     : `<div class="rem-badge">🏪 Retiro local</div>`;
@@ -457,13 +464,9 @@ function render(){
 
   root.innerHTML = `
   <div class="remito">
-
-    <!-- HEADER -->
     <div class="rem-header">
       <div class="rem-header-left">
-        <div class="rem-brand">
-          <span>Fast</span><span>Combos</span>
-        </div>
+        <div class="rem-brand"><span>Fast</span><span>Combos</span></div>
         <div class="rem-brand-sub">Rosario, Santa Fe · +54 9 341 270-8638 · Lun–Sáb 9–20 hs</div>
       </div>
       <div class="rem-header-right">
@@ -472,59 +475,35 @@ function render(){
         <div class="rem-fecha">${d.fecha} · ${d.hora}</div>
       </div>
     </div>
-
-    <!-- CLIENTE -->
     <div class="rem-client">
       <div>
         <div class="rem-section-label">Datos del cliente</div>
         <div class="rem-client-name">${d.name}</div>
-        <div class="rem-client-detail">
-          ${entregaRows}
-        </div>
+        <div class="rem-client-detail">${entregaRows}</div>
       </div>
       <div>${modoBadge}</div>
     </div>
-
-    <!-- TABLA -->
     <div class="rem-table-wrap">
       <div class="rem-section-label" style="margin-bottom:.75rem;">Detalle del pedido</div>
       <table class="rem-table">
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Cant.</th>
-            <th>P. Unit.</th>
-            <th>Subtotal</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows}
-        </tbody>
+        <thead><tr>
+          <th>Producto</th><th>Cant.</th><th>P. Unit.</th><th>Subtotal</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
       </table>
     </div>
-
-    <!-- TOTALES -->
     <div class="rem-totals">
       <div class="rem-totals-box">
-        <div class="rem-total-row">
-          <span>Subtotal</span><span>${fmt(subtotal)}</span>
-        </div>
+        <div class="rem-total-row"><span>Subtotal</span><span>${fmt(subtotal)}</span></div>
         ${discRow}
-        <div class="rem-total-row envio">
-          <span>🚚 Envío</span><span>A coordinar</span>
-        </div>
-        <div class="rem-total-row main">
-          <span>Total</span><span>${fmt(total)}</span>
-        </div>
+        <div class="rem-total-row envio"><span>🚚 Envío</span><span>A coordinar</span></div>
+        <div class="rem-total-row main"><span>Total</span><span>${fmt(total)}</span></div>
       </div>
     </div>
-
-    <!-- NOTA -->
     <div class="rem-note">
-      <strong>📌 Nota:</strong> El costo de envío se coordina con el vendedor al confirmar el pedido. Este documento es una orden de venta generada automáticamente y no reemplaza una factura oficial.
+      <strong>📌 Nota:</strong> El costo de envío se coordina con el vendedor al confirmar el pedido.
+      Este documento es una orden de venta generada automáticamente.
     </div>
-
-    <!-- FOOTER -->
     <div class="rem-footer">
       <div class="rem-footer-txt">
         <strong>FastCombos</strong><br>
@@ -533,11 +512,11 @@ function render(){
       </div>
       <div class="rem-footer-thanks">¡Gracias por tu pedido!</div>
     </div>
-
   </div>`;
 }
 
-render();
+loadOrder();
+</script>
 </script>
 </body>
 </html>
