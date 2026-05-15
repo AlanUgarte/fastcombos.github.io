@@ -995,6 +995,63 @@ footer strong{color:var(--gold2);}
 }
 
 /* ════════════════════════════════════════
+   SELECTOR BULTO / UNIDAD (modal)
+════════════════════════════════════════ */
+.cm-sell-toggle{
+  display:flex;gap:0;
+  border:1.5px solid var(--border2);
+  border-radius:10px;overflow:hidden;
+  margin-bottom:.85rem;
+  background:#fff;
+}
+.cm-sell-btn{
+  flex:1;padding:.55rem .5rem;
+  background:transparent;border:none;
+  font-family:'Jost',sans-serif;font-size:.8rem;font-weight:500;
+  color:var(--muted);cursor:pointer;transition:all .15s;
+  text-align:center;line-height:1.3;
+}
+.cm-sell-btn:first-child{border-right:1px solid var(--border2);}
+.cm-sell-btn.active{
+  background:var(--dark);color:var(--cream);
+}
+.cm-sell-btn strong{display:block;font-size:.92rem;color:inherit;}
+.cm-sell-btn .csb-note{font-size:.65rem;color:inherit;opacity:.7;}
+
+.cm-unit-hint{
+  background:linear-gradient(90deg,rgba(200,150,60,.13),rgba(200,150,60,.06));
+  border:1px solid rgba(200,150,60,.35);
+  border-radius:8px;
+  padding:.55rem .85rem;
+  font-size:.78rem;
+  color:var(--mid);
+  margin-bottom:.85rem;
+  display:flex;align-items:center;gap:7px;
+}
+.cm-unit-hint strong{color:var(--gold);font-weight:700;}
+
+.cm-prices-row{
+  display:flex;align-items:flex-end;gap:1.1rem;
+  margin-bottom:1rem;
+  flex-wrap:wrap;
+}
+.cm-price-block{display:flex;flex-direction:column;gap:2px;}
+.cm-price-block.secondary .cm-price{
+  font-size:1.2rem;color:var(--muted);
+}
+.cm-price-block.secondary .cm-price-note{font-size:.65rem;}
+.cm-price-sep{
+  color:var(--border2);font-size:1.4rem;padding-bottom:4px;
+}
+.cm-recargo-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.25);
+  color:var(--red);border-radius:20px;
+  font-size:.65rem;font-weight:600;padding:2px 8px;
+  margin-left:4px;vertical-align:middle;
+}
+
+/* ════════════════════════════════════════
    MODAL ADJUNTAR PDF
 ════════════════════════════════════════ */
 .pdf-modal-overlay{
@@ -1262,7 +1319,7 @@ footer strong{color:var(--gold2);}
 <!-- FOOTER -->
 <footer>
   <p><strong>FastCombos</strong> — Rosario, Santa Fe, Argentina</p>
-  <p>📱 WhatsApp: <a href="https://wa.me/5493413807110 "><strong>+54 9 341 270-8638</strong></a> · Lunes a Sábado de 9 a 20 hs</p>
+  <p>📱 WhatsApp: <a href="https://wa.me/5493412708638 "><strong>+54 9 341 270-8638</strong></a> · Lunes a Sábado de 9 a 20 hs</p>
   <p style="margin-top:.5rem;font-size:.72rem;">© 2025 FastCombos. Todos los derechos reservados.</p>
 </footer>
 
@@ -1277,12 +1334,8 @@ footer strong{color:var(--gold2);}
       <!-- filled by JS -->
     </div>
     <div class="cm-footer">
-      <div class="cm-price-row">
-        <div>
-          <div class="cm-price" id="cmPrice"></div>
-          <div class="cm-price-note">Precio por combo</div>
-        </div>
-      </div>
+      <!-- precio + selector modo → lo rellena JS -->
+      <div id="cmFooterInner"></div>
       <div class="cm-actions">
         <div class="cm-qty-wrap">
           <button class="cm-qty-btn" onclick="cmChQty(-1)">−</button>
@@ -1609,10 +1662,11 @@ const PRODUCTS = {
       name: '9 DE ORO BIZC.CLASICOS 24*200 GR.',
       desc: '',
       price: 26935.76,
-      units: 24,
+      units: ' ',
       img: 'https://www.tyna.com.ar///assets/archivos/recortadas/388.jpg',
       badge: '',
-      badgeType: ''
+      badgeType: '',
+      sellMode: 'unit'  // 'unit'=venta x unidad c/recargo | 'display'=venta x display | 'bulk'=solo bulto
     },
 
         {
@@ -1734,7 +1788,9 @@ const PRODUCTS = {
       units: ' ',
       img: 'https://www.tyna.com.ar//assets/archivos/recortadas/misky-turron-de-mani-10x25-gr_3345e8adb6.jpg',
       badge: '',  
-      badgeType: ''
+      badgeType: '',
+      sellMode: 'display',  // 4 displays de 50 unidades cada uno
+      displayQty: 50        // unidades por display
     },
                                     {
       id: 'arm-14',
@@ -1744,7 +1800,8 @@ const PRODUCTS = {
       units: ' ',
       img: 'https://www.tyna.com.ar///assets/archivos/recortadas/336.jpg',
       badge: '',  
-      badgeType: ''
+      badgeType: '',
+      sellMode: 'bulk'  // solo se vende por bulto completo
     },
                                         {
       id: 'arm-15',
@@ -2172,7 +2229,16 @@ const PRODUCTS = {
       badge: '',  
       badgeType: ''
     },
-
+                                                   {
+      id: 'arm-58',
+      name: 'TRIO GLASY 12*300 GR.',
+      desc: '',
+      price: 18037.96,
+      units: '',
+      img: 'data:image/jpeg;base64,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',
+      badge: '',  
+      badgeType: ''
+    },
                                                      {
       id: 'arm-59',
       name: 'TRIO FROLITAS MEMBRILLO 12*300 GR.',
@@ -2288,111 +2354,8 @@ const PRODUCTS = {
       badge: '',  
       badgeType: ''
     },
-                                                         {
-      id: 'arm-67',
-      name: 'TEREPIN PEPAS CASERITAS *5 KG.',
-      desc: '',
-      price: 16234,
-      units: '',
-      img: 'https://http2.mlstatic.com/D_NQ_NP_929907-MLA109769056070_042026-O.webp',
-      badge: '',  
-      badgeType: ''
-    },
-                                                         {
-      id: 'arm-68',
-      name: 'PAR-NOR PITUSAS RELLENA FRUTILLA *4 KG',
-      desc: '',
-      price: 23119.2,
-      units: '',
-      img: 'https://www.tyna.com.ar//assets/archivos/recortadas/par-nor-pitusas-rellena-frutilla-x4-kg_22e397f7b8.jpg',
-      badge: '',  
-      badgeType: ''
-    },
-
-                                                             {
-      id: 'arm-69',
-      name: 'PAR-NOR PITUSAS RELLENA CHOCOLATE *4 KG',
-      desc: '',
-      price: 23119.2,
-      units: '',
-      img: 'https://www.tyna.com.ar//assets/archivos/productos/2535.jpg',
-      badge: '',  
-      badgeType: ''
-    },
-                                                             {
-      id: 'arm-70',
-      name: 'GUAYMALLEN ALFAJOR TRIPLE BLANCO *24 UN.',
-      desc: '',
-      price: 11842.8,
-      units: '',
-      img: 'https://www.tyna.com.ar//assets/archivos/recortadas/guaymallen-alfajor-triple-blanco-x24-un_f2b809f1a3.jpg',
-      badge: '',  
-      badgeType: ''
-    },
-                                                                 {
-      id: 'arm-71',
-      name: 'GUAYMALLEN ALFAJOR TRIPLE CHOCOLATE *24 UN.',
-      desc: '',
-      price: 11842.8 ,
-      units: '',
-      img: 'https://www.tyna.com.ar//assets/archivos/recortadas/guaymallen-alfajor-triple-chocolate-x24-un_f3001a1e9e.jpg',
-      badge: '',  
-      badgeType: ''
-    },
-
-                                                                 {
-      id: 'arm-72',
-      name: 'SWEET VAINILLAS 14*225 GR.',
-      desc: '',
-      price: 22892.4,
-      units: '',
-      img: 'https://www.tyna.com.ar///assets/archivos/recortadas/78.jpg',
-      badge: '',  
-      badgeType: ''
-    },
-
-                                                                 {
-      id: 'arm-73',
-      name: 'LIA MEDIATARDE CRACKERS 14*315 GR.',
-      desc: '',
-      price: 18018.70,
-      units: '',
-      img: 'https://www.tyna.com.ar///assets/archivos/recortadas/42183.jpg',
-      badge: '',  
-      badgeType: ''
-    },
-                                                                 {
-      id: 'arm-74',
-      name: 'PASEO CINCO SEMILLAS 14*300 GR.',
-      desc: '',
-      price: 25928.64,
-      units: '',
-      img: 'https://www.tyna.com.ar///assets/archivos/recortadas/5052.jpg',
-      badge: '',  
-      badgeType: ''
-    },
 
 
-                                                                   {
-      id: 'arm-75',
-      name: '9 DE ORO BIZC.AZUCARADOS 28*210 GR.',
-      desc: '',
-      price: 31425.08,
-      units: '',
-      img: 'https://www.tyna.com.ar///assets/archivos/recortadas/398.jpg',
-      badge: '',  
-      badgeType: ''
-    },
-                                                                   {
-      id: 'arm-76',
-      name: 'TRIO GLASY 12*300 GR.',
-      desc: '',
-      price: 15150,
-      units: '',
-      img: 'https://www.tyna.com.ar//assets/archivos/productos/48534.jpg',
-      badge: '',  
-      badgeType: ''
-    },
 
 
 
@@ -2402,7 +2365,7 @@ const PRODUCTS = {
 /* ════════════════════════════════════════
    STATE
 ════════════════════════════════════════ */
-const WA_NUMBER = '5493413807110';
+const WA_NUMBER = '5493412708638';
 let cart = {}; // { productId: qty }
 let deliveryMode = null; // 'envio' | 'retiro'
 let appliedCoupon = null; // { label, discount, desc } | null
@@ -2429,6 +2392,8 @@ function toast(msg){
   setTimeout(() => el.remove(), 3200);
 }
 function findProduct(id){
+  // Primero buscar en productos virtuales (ítems vendidos por unidad/display/zuncho)
+  if(window._virtualProducts && window._virtualProducts[id]) return window._virtualProducts[id];
   for(const cat of Object.values(PRODUCTS)){
     const p = cat.find(x => x.id === id);
     if(p) return p;
@@ -2549,13 +2514,20 @@ function renderDrawerItems(){
   let subtotal = 0;
   el.innerHTML = keys.map(id => {
     const p = findProduct(id);
+    if(!p) return '';
     const qty = cart[id];
     subtotal += p.price * qty;
+    // Badge de modo si es virtual
+    const modeLabels = { unit:'x unidad', display:'x display', zuncho:'x zuncho' };
+    const modeKey = p._sellMode;
+    const modeBadge = modeKey
+      ? `<span style="display:inline-block;background:rgba(200,150,60,.15);border:1px solid rgba(200,150,60,.4);color:var(--gold);font-size:.62rem;font-weight:600;border-radius:20px;padding:1px 7px;margin-left:4px;">${modeLabels[modeKey]||''}</span>`
+      : '';
     return `
       <div class="cart-item">
         <div class="ci-img"><img src="${p.img}" alt="${p.name}"/></div>
         <div class="ci-info">
-          <div class="ci-name">${p.name}</div>
+          <div class="ci-name">${p._baseName || p.name}${modeBadge}</div>
           <div class="ci-price">${fmt(p.price * qty)}</div>
           <div class="ci-ctrl">
             <button class="ci-qty-btn" onclick="chQty('${id}',-1)">−</button>
@@ -2894,10 +2866,15 @@ async function sendWhatsApp(){
 
   // ── Armar datos ──
   let subtotal = 0;
+  const modeLabelsWA = { unit:'por unidad', display:'por display', zuncho:'por zuncho' };
   const itemsData = keys.map(id => {
-    const p = findProduct(id); const qty = cart[id];
+    const p   = findProduct(id);
+    const qty = cart[id];
     subtotal += p.price * qty;
-    return { name: p.name, qty, price: p.price };
+    const displayName = p._baseName
+      ? `${p._baseName} (${modeLabelsWA[p._sellMode]||p._sellMode})`
+      : p.name.trim();
+    return { name: displayName, qty, price: p.price };
   });
   const discountAmt = appliedCoupon ? subtotal * appliedCoupon.discount : 0;
   const total       = subtotal - discountAmt;
@@ -3018,56 +2995,262 @@ function removeCoupon(){
 
 /* ════════════════════════════════════════
    COMBO DETAIL MODAL
+   ─────────────────────────────────────
+   Modos de venta (campo sellMode en PRODUCTS):
+     'bulk'    → solo bulto completo (default si el nombre empieza con * sin nro)
+     'unit'    → bulto + unidad (markup 8.5%)
+     'display' → bulto + display (markup 8.5%). Requiere displayQty en el producto.
+     'zuncho'  → bulto + zuncho  (markup 8.5%). Requiere zunchoQty en el producto.
+   No especificado → se auto-detecta del nombre.
+
+   Campos opcionales por producto:
+     unitsPerBulk: number   // fuerza cantidad; si no, se parsea del nombre
+     displayQty:  number    // unidades por display (para mode display)
+     zunchoQty:   number    // unidades por zuncho  (para mode zuncho)
+     markup:      number    // recargo decimal; default 0.085 (8.5%)
 ════════════════════════════════════════ */
 let cmProductId = null;
-let cmQtyVal = 1;
+let cmQtyVal    = 1;
+let cmSellMode  = 'bulk'; // modo activo en el modal
 
-// Helper: parse items from desc string (split by comma or semicolon)
+const MARKUP_DEFAULT = 0.085; // 8.5 % para unidad, display y zuncho
+
+// ── Helper: items de descripción ──
 function parseComboItems(p) {
-  // Use items array if defined, else split desc
   if (p.items && p.items.length) return p.items;
   const raw = p.desc || '';
   if (!raw) return [];
-  // Split on comma or period+space, clean up
   return raw.split(/[,;]/).map(s => s.trim()).filter(Boolean);
 }
 
+/* ─────────────────────────────────────────
+   parseBulkUnits(name)
+   Extrae info de cantidad del nombre del producto.
+   Retorna:
+     { unitsPerBulk: N }           →  "24*200 GR."
+     { displays: N, unitsPerDisplay: M } → "4*50*25 GR."
+     null                          →  "*700 GR."  (solo bulto)
+───────────────────────────────────────── */
+function parseBulkUnits(name) {
+  const n = name.trim();
+  // Formato doble: 4*50*25  (displays * unidades/display * gramos)
+  const d = n.match(/(\d+)\*(\d+)\*\d+/);
+  if (d) return { displays: +d[1], unitsPerDisplay: +d[2] };
+  // Formato simple: 24*200  (unidades * gramos)
+  const s = n.match(/(\d+)\*\d/);
+  if (s) return { unitsPerBulk: +s[1] };
+  // Sin número antes del asterisco → solo bulto
+  return null;
+}
+
+/* Auto-detecta el sellMode si el producto no lo define */
+function autoSellMode(p) {
+  if (p.sellMode) return p.sellMode;
+  const info = parseBulkUnits(p.name);
+  if (!info) return 'bulk';
+  if (info.displays) return 'display';
+  return 'unit'; // tiene unitsPerBulk → venta por unidad activada
+}
+
+/* Precio con markup para un modo dado */
+function priceForMode(p, mode, bulkInfo) {
+  const mk = (p.markup !== undefined ? p.markup : MARKUP_DEFAULT);
+  if (mode === 'bulk') return p.price;
+  if (mode === 'unit') {
+    const uPerB = p.unitsPerBulk || (bulkInfo && bulkInfo.unitsPerBulk) || 1;
+    return (p.price / uPerB) * (1 + mk);
+  }
+  if (mode === 'display') {
+    const displays = (bulkInfo && bulkInfo.displays) || 1;
+    return (p.price / displays) * (1 + mk);
+  }
+  if (mode === 'zuncho') {
+    const zq = p.zunchoQty || 1;
+    return (p.price / zq) * (1 + mk);
+  }
+  return p.price;
+}
+
+/* Etiqueta legible para cada modo */
+function modeLabel(mode, bulkInfo, p) {
+  const disp  = (bulkInfo && bulkInfo.displays)      || 1;
+  const uPerD = p.displayQty || (bulkInfo && bulkInfo.unitsPerDisplay) || 1;
+  const uPerB = p.unitsPerBulk || (bulkInfo && bulkInfo.unitsPerBulk) || 1;
+  const zq    = p.zunchoQty || 1;
+  if (mode === 'bulk')    return `📦 Bulto completo`;
+  if (mode === 'unit')    return `🔹 Por unidad`;
+  if (mode === 'display') return `🔹 Por display (${uPerD} un.)`;
+  if (mode === 'zuncho')  return `🔹 Por zuncho (${zq} un.)`;
+  return mode;
+}
+
+/* ── Abre el modal ── */
 function openComboModal(id) {
   const p = findProduct(id);
   if (!p) return;
   cmProductId = id;
-  cmQtyVal = cart[id] || 1;
+  cmQtyVal    = 1;
+  cmSellMode  = 'bulk';
 
-  // Title
-  document.getElementById('cmTitle').textContent = p.name;
-  document.getElementById('cmPrice').textContent = fmt(p.price);
+  const bulkInfo   = parseBulkUnits(p.name);
+  const sellMode   = autoSellMode(p); // modo extra disponible
+
+  document.getElementById('cmTitle').textContent = p.name.trim();
 
   // Body
   const items = parseComboItems(p);
   const itemsHTML = items.length
     ? `<p class="cm-items-label">Artículos incluidos</p>
-       <ul class="cm-items-list">
-         ${items.map(it => `<li>${it}</li>`).join('')}
-       </ul>`
+       <ul class="cm-items-list">${items.map(it => `<li>${it}</li>`).join('')}</ul>`
     : '';
 
   document.getElementById('cmBody').innerHTML = `
     <div class="cm-img-wrap">
-      <img src="${p.img || ''}" alt="${p.name}" onerror="this.style.display='none'"/>
+      <img src="${p.img||''}" alt="${p.name}" onerror="this.style.display='none'"/>
       ${p.badge ? `<span class="cm-badge ${p.badgeType||''}">${p.badge}</span>` : ''}
     </div>
     <div class="cm-content">
-      <div class="cm-name">${p.name}</div>
+      <div class="cm-name">${p.name.trim()}</div>
       ${p.desc ? `<div class="cm-desc">${p.desc}</div>` : ''}
-      ${p.units ? `<div class="cm-units-row">📦 ${p.units}</div>` : ''}
       ${itemsHTML}
-    </div>
-  `;
+    </div>`;
 
+  buildModalFooter(p, bulkInfo, sellMode);
   updateCmQtyUI();
 
   document.getElementById('comboModalOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+}
+
+/* ── Construye la zona de precio + selector ── */
+function buildModalFooter(p, bulkInfo, sellMode) {
+  const footer = document.getElementById('cmFooterInner');
+  const mk     = (p.markup !== undefined ? p.markup : MARKUP_DEFAULT);
+  const mkPct  = Math.round(mk * 100);
+
+  if (sellMode === 'bulk') {
+    // Solo bulto — sin toggle
+    footer.innerHTML = `
+      <div class="cm-price-row">
+        <div>
+          <div class="cm-price" id="cmPrice">${fmt(p.price)}</div>
+          <div class="cm-price-note">Precio por bulto</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Precios
+  const bulkPrice = p.price;
+  const altPrice  = priceForMode(p, sellMode, bulkInfo);
+  const altLabel  = modeLabel(sellMode, bulkInfo, p);
+
+  footer.innerHTML = `
+    <div class="cm-sell-toggle">
+      <button class="cm-sell-btn active" id="cmsb-bulk" onclick="cmSetSellMode('bulk')">
+        <strong>${fmt(bulkPrice)}</strong>
+        <span class="csb-note">📦 Bulto completo</span>
+      </button>
+      <button class="cm-sell-btn" id="cmsb-${sellMode}" onclick="cmSetSellMode('${sellMode}')">
+        <strong>${fmt(altPrice)}</strong>
+        <span class="csb-note">${altLabel} <span class="cm-recargo-badge">+${mkPct}%</span></span>
+      </button>
+    </div>
+    <div id="cmUnitHint" class="cm-unit-hint" style="display:none">
+      <span>💡</span><span id="cmUnitHintText"></span>
+    </div>
+    <div class="cm-price-row" style="margin-bottom:.4rem">
+      <div>
+        <div class="cm-price" id="cmPrice">${fmt(bulkPrice)}</div>
+        <div class="cm-price-note" id="cmPriceNote">Precio por bulto</div>
+      </div>
+    </div>`;
+}
+
+/* ── Cambia el modo activo y actualiza UI ── */
+function cmSetSellMode(mode) {
+  cmSellMode = mode;
+  cmQtyVal   = 1;
+
+  const p        = findProduct(cmProductId);
+  const bulkInfo = parseBulkUnits(p.name);
+  const sellMode = autoSellMode(p);
+  const mk       = (p.markup !== undefined ? p.markup : MARKUP_DEFAULT);
+  const mkPct    = Math.round(mk * 100);
+
+  // Toggle visual
+  document.querySelectorAll('.cm-sell-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('cmsb-' + mode);
+  if (btn) btn.classList.add('active');
+
+  const priceEl = document.getElementById('cmPrice');
+  const noteEl  = document.getElementById('cmPriceNote');
+  const hintEl  = document.getElementById('cmUnitHint');
+
+  const currentPrice = priceForMode(p, mode, bulkInfo);
+  if (priceEl) priceEl.textContent = fmt(currentPrice);
+
+  if (mode === 'bulk') {
+    if (noteEl) noteEl.textContent = 'Precio por bulto';
+    if (hintEl) hintEl.style.display = 'none';
+  } else {
+    if (noteEl) noteEl.textContent = `Precio ${modeLabel(mode, bulkInfo, p).replace(/📦|🔹/g,'').trim()} (+${mkPct}% vs. bulto)`;
+    if (hintEl) hintEl.style.display = 'flex';
+    refreshHint(p, mode, bulkInfo);
+  }
+
+  updateCmQtyUI();
+}
+
+/* ── Actualiza el hint de "te faltan X para completar un bulto" ── */
+function refreshHint(p, mode, bulkInfo) {
+  const txt = document.getElementById('cmUnitHintText');
+  if (!txt) return;
+  const mk        = (p.markup !== undefined ? p.markup : MARKUP_DEFAULT);
+  const bulkPrice = p.price;
+
+  if (mode === 'unit') {
+    const uPerB    = p.unitsPerBulk || (bulkInfo && bulkInfo.unitsPerBulk) || 1;
+    const unitP    = priceForMode(p, 'unit', bulkInfo);
+    const unitsInCart  = cmQtyVal;
+    const completeBulks = Math.floor(unitsInCart / uPerB);
+    const resto    = unitsInCart % uPerB;
+    const needed   = resto === 0 ? 0 : uPerB - resto;
+
+    if (needed === 0 && unitsInCart > 0) {
+      txt.innerHTML = `Llevás <strong>${unitsInCart} unidades</strong> = <strong>${completeBulks} bulto${completeBulks!==1?'s':''} completo${completeBulks!==1?'s':''}</strong>. ¡Precio de bulto!`;
+    } else {
+      const costXUnit  = fmt(unitP * uPerB);   // costo de un bulto pagando x unidad
+      txt.innerHTML = `Te faltan <strong>${needed} unidad${needed!==1?'es':''}</strong> para completar el bulto (<strong>${fmt(bulkPrice)}</strong>). Un bulto completo pagando por unidad te sale <strong>${costXUnit}</strong>.`;
+    }
+  }
+
+  if (mode === 'display') {
+    const displays = (bulkInfo && bulkInfo.displays) || 1;
+    const dispP    = priceForMode(p, 'display', bulkInfo);
+    const needed   = displays - (cmQtyVal % displays === 0 ? displays : cmQtyVal % displays);
+    const isCompl  = cmQtyVal % displays === 0;
+    if (isCompl) {
+      txt.innerHTML = `Llevás <strong>${cmQtyVal} display${cmQtyVal!==1?'s':''}</strong> = bulto completo. ¡Precio de bulto!`;
+    } else {
+      txt.innerHTML = `Te faltan <strong>${needed} display${needed!==1?'s':''}</strong> para completar el bulto (<strong>${fmt(bulkPrice)}</strong>). ${displays} displays pagando por display te sale <strong>${fmt(dispP * displays)}</strong>.`;
+    }
+  }
+
+  if (mode === 'zuncho') {
+    const zq    = p.zunchoQty || 1;
+    const zuncP = priceForMode(p, 'zuncho', bulkInfo);
+    // cuántos zunchos entran en un bulto
+    const uPerB = p.unitsPerBulk || (bulkInfo && bulkInfo.unitsPerBulk) || 1;
+    const zPerB = Math.round(uPerB / zq);
+    const needed = zPerB - (cmQtyVal % zPerB === 0 ? zPerB : cmQtyVal % zPerB);
+    const isCompl = cmQtyVal % zPerB === 0;
+    if (isCompl) {
+      txt.innerHTML = `Llevás <strong>${cmQtyVal} zuncho${cmQtyVal!==1?'s':''}</strong> = bulto completo. ¡Precio de bulto!`;
+    } else {
+      txt.innerHTML = `Te faltan <strong>${needed} zuncho${needed!==1?'s':''}</strong> para completar el bulto (<strong>${fmt(bulkPrice)}</strong>). ${zPerB} zunchos pagando por zuncho te sale <strong>${fmt(zuncP * zPerB)}</strong>.`;
+    }
+  }
 }
 
 function closeComboModal(e) {
@@ -3078,34 +3261,75 @@ function closeComboModal(e) {
 
 function cmChQty(d) {
   cmQtyVal = Math.max(1, cmQtyVal + d);
+  // Actualizar precio total si aplica
+  const p        = findProduct(cmProductId);
+  const bulkInfo = parseBulkUnits(p.name);
+  if (cmSellMode !== 'bulk') refreshHint(p, cmSellMode, bulkInfo);
   updateCmQtyUI();
 }
 
 function updateCmQtyUI() {
   document.getElementById('cmQty').textContent = cmQtyVal;
-  const inCart = !!cart[cmProductId];
+  const inCart = !!cart[cmProductId] ||
+    !!(window._virtualProducts && Object.keys(window._virtualProducts).some(k => k.startsWith(cmProductId + '_')));
   const btn = document.getElementById('cmAddBtn');
   if (inCart) {
     btn.textContent = `✓ En pedido · Actualizar (${cmQtyVal})`;
-    btn.className = 'cm-add-btn in-cart';
+    btn.className   = 'cm-add-btn in-cart';
   } else {
     btn.innerHTML = `🛒 Agregar al pedido`;
     btn.className = 'cm-add-btn';
   }
 }
 
+/* ── Agrega al carrito, creando producto virtual si es modo sub-bulto ── */
 function cmAddToCart() {
   if (!cmProductId) return;
-  cart[cmProductId] = cmQtyVal;
+  const p        = findProduct(cmProductId);
+  const bulkInfo = parseBulkUnits(p.name);
+
+  if (cmSellMode === 'bulk') {
+    // Limpia cualquier virtual previo de este producto
+    _clearVirtual(cmProductId);
+    cart[cmProductId] = cmQtyVal;
+  } else {
+    // Elimina entrada de bulto si existía
+    delete cart[cmProductId];
+    _clearVirtual(cmProductId);
+
+    const effectivePrice = priceForMode(p, cmSellMode, bulkInfo);
+    const virtualId = cmProductId + '_' + cmSellMode;
+
+    if (!window._virtualProducts) window._virtualProducts = {};
+    window._virtualProducts[virtualId] = {
+      ...p,
+      id:        virtualId,
+      _baseName: p.name.trim(),
+      _sellMode: cmSellMode,
+      price:     effectivePrice
+    };
+    cart[virtualId] = cmQtyVal;
+  }
+
   updateCartUI();
   renderCardActions(cmProductId);
-  const p = findProduct(cmProductId);
-  toast(`✅ ${p.name} x${cmQtyVal} agregado al pedido`);
+  const modeStr = cmSellMode === 'bulk' ? 'bulto' : cmSellMode;
+  toast(`✅ ${p.name.trim()} ×${cmQtyVal} (${modeStr}) agregado`);
   document.getElementById('comboModalOverlay').classList.remove('open');
   document.body.style.overflow = '';
 }
 
-// Close modal on Escape key
+/* Elimina todos los virtuales de un producto base */
+function _clearVirtual(baseId) {
+  if (!window._virtualProducts) return;
+  Object.keys(window._virtualProducts).forEach(k => {
+    if (k.startsWith(baseId + '_')) {
+      delete window._virtualProducts[k];
+      delete cart[k];
+    }
+  });
+}
+
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     document.getElementById('comboModalOverlay').classList.remove('open');
