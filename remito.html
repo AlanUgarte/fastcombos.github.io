@@ -3,33 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orden de Venta — FastCombos</title>
+<title>Orden de Venta — FastCombos 🎂</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 <style>
 /* ══════════════════════════════════════
    VARIABLES & RESET
 ══════════════════════════════════════ */
 :root{
-  --cream:  #faf8f3;
-  --cream2: #f3efe6;
-  --dark:   #1a1612;
-  --dark2:  #2a231b;
-  --mid:    #4a3f35;
-  --gold:   #c8963c;
-  --gold2:  #e8b45a;
-  --border: #e2d8c8;
-  --muted:  #9a8f82;
+  --cream:  #fff8fd;
+  --cream2: #fdeef9;
+  --dark:   #1e0a3c;
+  --dark2:  #2d1260;
+  --mid:    #5b4272;
+  --gold:   #e91e8c;
+  --gold2:  #ff6bb5;
+  --border: #f0d5ee;
+  --muted:  #9b7aae;
   --green:  #2e7d32;
   --red:    #c0392b;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{
-  background:#eee9e0;
-  font-family:'Jost',sans-serif;
-  font-weight:300;
+  background:#f5e9ff;
+  font-family:'Nunito',sans-serif;
+  font-weight:400;
   min-height:100vh;
   display:flex;
   flex-direction:column;
@@ -48,7 +48,7 @@ img{max-width:100%;}
   flex-wrap:wrap;
 }
 .action-bar-brand{
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Baloo 2',sans-serif;
   font-size:1.5rem;font-weight:700;
   color:var(--dark);text-decoration:none;
   display:flex;align-items:baseline;gap:2px;
@@ -59,7 +59,7 @@ img{max-width:100%;}
 
 .btn{
   display:inline-flex;align-items:center;gap:7px;
-  border-radius:10px;font-family:'Jost',sans-serif;
+  border-radius:10px;font-family:'Nunito',sans-serif;
   font-size:.85rem;font-weight:500;
   padding:.65rem 1.3rem;cursor:pointer;border:none;
   transition:all .18s;letter-spacing:.03em;
@@ -85,7 +85,7 @@ img{max-width:100%;}
 
 /* ─── HEADER ─── */
 .rem-header{
-  background:var(--dark);
+  background:linear-gradient(135deg,var(--dark) 0%,#3d0a6e 100%);
   padding:2rem 2.5rem 1.8rem;
   display:flex;align-items:flex-start;justify-content:space-between;
   gap:1.5rem;
@@ -95,20 +95,20 @@ img{max-width:100%;}
 .rem-header::after{
   content:'';
   position:absolute;bottom:0;left:0;right:0;
-  height:3px;background:var(--gold);
+  height:4px;background:linear-gradient(90deg,var(--gold),#FF6B35,#FFD600,var(--gold));
 }
 .rem-header-left{}
 .rem-brand{
-  font-family:'Cormorant Garamond',serif;
-  font-size:2.4rem;font-weight:700;
+  font-family:'Baloo 2',sans-serif;
+  font-size:2.4rem;font-weight:800;
   line-height:1;margin-bottom:.35rem;
   display:flex;align-items:baseline;gap:3px;
 }
-.rem-brand span:first-child{color:#faf8f3;}
-.rem-brand span:last-child{color:var(--gold);}
+.rem-brand span:first-child{color:#fff8fd;}
+.rem-brand span:last-child{color:var(--gold2);}
 .rem-brand-sub{
-  font-size:.75rem;font-weight:400;
-  color:rgba(250,248,243,.45);
+  font-size:.75rem;font-weight:500;
+  color:rgba(255,248,253,.5);
   letter-spacing:.04em;
 }
 
@@ -121,7 +121,7 @@ img{max-width:100%;}
   color:var(--gold);margin-bottom:.4rem;
 }
 .rem-nro{
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Baloo 2',sans-serif;
   font-size:1.8rem;font-weight:700;
   color:#faf8f3;line-height:1;
 }
@@ -144,7 +144,7 @@ img{max-width:100%;}
   color:var(--gold);margin-bottom:.5rem;
 }
 .rem-client-name{
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Baloo 2',sans-serif;
   font-size:1.6rem;font-weight:700;
   color:var(--dark);line-height:1.2;
   margin-bottom:.4rem;
@@ -177,7 +177,7 @@ img{max-width:100%;}
   background:var(--dark);
 }
 .rem-table thead th{
-  font-family:'Jost',sans-serif;
+  font-family:'Nunito',sans-serif;
   font-size:.68rem;font-weight:600;
   letter-spacing:.15em;text-transform:uppercase;
   color:var(--gold);
@@ -207,7 +207,7 @@ img{max-width:100%;}
 }
 .rem-table tbody td:not(:first-child){text-align:right;white-space:nowrap;}
 .rem-table tbody td.td-bold{
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Baloo 2',sans-serif;
   font-size:1rem;font-weight:700;
   color:var(--dark);
 }
@@ -236,7 +236,7 @@ img{max-width:100%;}
 .rem-total-row.envio{color:var(--gold);}
 .rem-total-row.main{
   background:var(--dark);
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Baloo 2',sans-serif;
   font-size:1.3rem;font-weight:700;
   color:#faf8f3;padding:.85rem 1.1rem;
 }
@@ -268,7 +268,7 @@ img{max-width:100%;}
 }
 .rem-footer-txt strong{color:var(--gold2);}
 .rem-footer-thanks{
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Baloo 2',sans-serif;
   font-size:1.05rem;font-weight:700;
   color:var(--gold);font-style:italic;
 }
@@ -282,7 +282,7 @@ img{max-width:100%;}
 }
 .error-card .ico{font-size:3rem;margin-bottom:1rem;}
 .error-card h2{
-  font-family:'Cormorant Garamond',serif;
+  font-family:'Baloo 2',sans-serif;
   font-size:1.5rem;font-weight:700;margin-bottom:.6rem;color:var(--dark);
 }
 .error-card p{font-size:.88rem;color:var(--muted);line-height:1.7;}
