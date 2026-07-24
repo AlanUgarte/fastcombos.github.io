@@ -250,10 +250,21 @@ nav{
 }
 .search-input:focus{border-color:var(--gold);background:#fff;}
 .search-count{font-size:.78rem;color:var(--muted);white-space:nowrap;}
+.linea-toggle{
+  display:flex;align-items:center;justify-content:space-between;gap:.5rem;
+  width:calc(100% - 3rem);margin:0 1.5rem .7rem;
+  background:var(--cream2);border:1.5px solid var(--border2);border-radius:10px;
+  color:var(--mid);font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:600;
+  padding:.6rem .95rem;cursor:pointer;transition:all .15s;
+}
+.linea-toggle:hover{border-color:var(--gold);color:var(--gold);}
+.linea-toggle-arrow{transition:transform .2s;}
+.linea-toggle.open .linea-toggle-arrow{transform:rotate(180deg);}
 .linea-filters{
-  display:flex;flex-wrap:wrap;gap:.5rem;
+  display:none;flex-wrap:wrap;gap:.5rem;
   padding:0 1.5rem .8rem;
 }
+.linea-filters.open{display:flex;}
 .linea-pill{
   background:var(--cream2);border:1.5px solid var(--border2);border-radius:20px;
   color:var(--mid);font-family:'Nunito',sans-serif;font-size:.76rem;font-weight:500;
@@ -1238,6 +1249,10 @@ footer strong{color:var(--gold2);}
     <input type="text" id="searchInput" class="search-input" placeholder="Buscar producto de cotillón..." oninput="filterProducts()"/>
     <span class="search-count" id="searchCount"></span>
   </div>
+  <button class="linea-toggle" id="lineaToggle" onclick="toggleLineaDropdown()">
+    <span id="lineaToggleLabel">Categorías Cotillón</span>
+    <span class="linea-toggle-arrow">▾</span>
+  </button>
   <div class="linea-filters" id="lineaFilters"></div>
 </div>
 
@@ -3213,11 +3228,19 @@ function renderLineaFilters(){
     lineas.map(l => `<button class="linea-pill" data-linea="${l.toLowerCase()}" onclick="setLinea('${l.toLowerCase().replace(/'/g,"\\'")}',this)">${l}</button>`).join('');
 }
 
+function toggleLineaDropdown(force){
+  const open = force !== undefined ? force : !document.getElementById('lineaFilters').classList.contains('open');
+  document.getElementById('lineaFilters').classList.toggle('open', open);
+  document.getElementById('lineaToggle').classList.toggle('open', open);
+}
+
 function setLinea(linea, btn){
   activeLinea = linea;
   document.querySelectorAll('.linea-pill').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  document.getElementById('lineaToggleLabel').textContent = linea === 'all' ? 'Categorías Cotillón' : btn.textContent;
   filterProducts();
+  toggleLineaDropdown(false);
 }
 
 function filterProducts(){
