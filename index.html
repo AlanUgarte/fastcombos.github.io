@@ -257,6 +257,14 @@ nav{
 }
 .combos-toggle:hover{background:var(--dark2);}
 .combos-toggle.active{background:var(--gold);border-color:var(--gold);}
+.pricelist-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  background:transparent;border:1.5px solid var(--gold);border-radius:10px;
+  color:var(--gold);font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;
+  padding:.6rem 1rem;cursor:pointer;transition:all .15s;white-space:nowrap;
+  text-decoration:none;
+}
+.pricelist-btn:hover{background:var(--gold);color:#fff;}
 .linea-toggle{
   display:flex;align-items:center;justify-content:space-between;gap:.5rem;
   width:calc(100% - 3rem);margin:0 1.5rem .7rem;
@@ -1255,6 +1263,7 @@ footer strong{color:var(--gold2);}
   <div class="search-bar-wrap">
     <input type="text" id="searchInput" class="search-input" placeholder="Buscar producto de cotillón..." oninput="filterProducts()"/>
     <button class="combos-toggle" id="combosToggle" onclick="toggleCombosView()">🎁 Combos Cotillón</button>
+    <a class="pricelist-btn" href="lista-precios-cotillon.pdf" download>📄 Lista de precios (PDF)</a>
     <span class="search-count" id="searchCount"></span>
   </div>
   <button class="linea-toggle" id="lineaToggle" onclick="toggleLineaDropdown()">
