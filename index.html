@@ -250,6 +250,13 @@ nav{
 }
 .search-input:focus{border-color:var(--gold);background:#fff;}
 .search-count{font-size:.78rem;color:var(--muted);white-space:nowrap;}
+.combos-toggle{
+  background:var(--dark);border:1.5px solid var(--dark);border-radius:10px;
+  color:var(--cream);font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;
+  padding:.6rem 1rem;cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.combos-toggle:hover{background:var(--dark2);}
+.combos-toggle.active{background:var(--gold);border-color:var(--gold);}
 .linea-toggle{
   display:flex;align-items:center;justify-content:space-between;gap:.5rem;
   width:calc(100% - 3rem);margin:0 1.5rem .7rem;
@@ -1247,6 +1254,7 @@ footer strong{color:var(--gold2);}
 <div class="cat-nav-wrap" id="productos">
   <div class="search-bar-wrap">
     <input type="text" id="searchInput" class="search-input" placeholder="Buscar producto de cotillón..." oninput="filterProducts()"/>
+    <button class="combos-toggle" id="combosToggle" onclick="toggleCombosView()">🎁 Combos Cotillón</button>
     <span class="search-count" id="searchCount"></span>
   </div>
   <button class="linea-toggle" id="lineaToggle" onclick="toggleLineaDropdown()">
@@ -1254,6 +1262,18 @@ footer strong{color:var(--gold2);}
     <span class="linea-toggle-arrow">▾</span>
   </button>
   <div class="linea-filters" id="lineaFilters"></div>
+</div>
+
+<!-- PRODUCTS: COMBOS -->
+<div class="products-section hidden" id="sec-combos">
+  <div class="cat-header">
+    <div class="cat-header-left">
+      <div class="cat-header-label">Armados por Tyna</div>
+      <div class="cat-header-title">🎁 Combos Cotillón por Cantidad de Invitados</div>
+      <div class="cat-header-desc">Combos surtidos ya armados para fiestas de 50, 100, 150 y 200 personas. Ver detalle para el listado completo de artículos incluidos.</div>
+    </div>
+  </div>
+  <div class="products-grid" id="grid-combos"></div>
 </div>
 
 <!-- PRODUCTS: COTILLON -->
@@ -1447,6 +1467,12 @@ footer strong{color:var(--gold2);}
    PRODUCTOS — EDITÁ AQUÍ TUS COMBOS
 ════════════════════════════════════════ */
 const PRODUCTS = {
+  combos: [
+    {id:'combo-50',name:'Combo Cotillón Surtido — 50 Personas',desc:'Combo armado con 9 artículos surtidos de cotillón (globos, gorros, antifaces, velas, collares, pulseras y más), pensado para una fiesta de 50 personas. El detalle completo está en "Ver detalle".',items:['3x Globos surtidos standard T260 (paq. 20 unid.)','10x Globos corazón decorativos 18"','25x Gorros funyi metalizados','25x Antifaces fluo con elástico','1x Velas largas con brillos (paq. 6 unid.)','5x Lanzapapel de resorte','1x Collares flexibles neón (tubo x50 unid.)','25x Pulseras mágicas fluorescentes','1x Burbujero surtido (paq. 48 unid.)'],price:39562.63,units:'9 artículos surtidos',img:'https://www.tyna.com.ar/archivos/imagenes_productos/1080000458.jpg',badge:'50 Personas',badgeType:'',linea:'🎁 Combo armado',sellMode:'bulk'},
+    {id:'combo-100',name:'Combo Cotillón Surtido — 100 Personas',desc:'Combo armado con 9 artículos surtidos de cotillón (globos, gorros, antifaces, velas, collares, pulseras y más), pensado para una fiesta de 100 personas. El detalle completo está en "Ver detalle".',items:['6x Globos surtidos standard T260 (paq. 20 unid.)','20x Globos corazón decorativos 18"','50x Gorros funyi metalizados','50x Antifaces fluo con elástico','2x Velas largas con brillos (paq. 6 unid.)','10x Lanzapapel de resorte','2x Collares flexibles neón (tubo x50 unid.)','50x Pulseras mágicas fluorescentes','2x Burbujero surtido (paq. 48 unid.)'],price:79125.26,units:'9 artículos surtidos',img:'https://www.tyna.com.ar/archivos/imagenes_productos/1080000458.jpg',badge:'100 Personas',badgeType:'',linea:'🎁 Combo armado',sellMode:'bulk'},
+    {id:'combo-150',name:'Combo Cotillón Surtido — 150 Personas',desc:'Combo armado con 9 artículos surtidos de cotillón (globos, gorros, antifaces, velas, collares, pulseras y más), pensado para una fiesta de 150 personas. El detalle completo está en "Ver detalle".',items:['9x Globos surtidos standard T260 (paq. 20 unid.)','30x Globos corazón decorativos 18"','75x Gorros funyi metalizados','75x Antifaces fluo con elástico','3x Velas largas con brillos (paq. 6 unid.)','15x Lanzapapel de resorte','3x Collares flexibles neón (tubo x50 unid.)','75x Pulseras mágicas fluorescentes','3x Burbujero surtido (paq. 48 unid.)'],price:118687.89,units:'9 artículos surtidos',img:'https://www.tyna.com.ar/archivos/imagenes_productos/1080000458.jpg',badge:'150 Personas',badgeType:'',linea:'🎁 Combo armado',sellMode:'bulk'},
+    {id:'combo-200',name:'Combo Cotillón Surtido — 200 Personas',desc:'Combo armado con 9 artículos surtidos de cotillón (globos, gorros, antifaces, velas, collares, pulseras y más), pensado para una fiesta de 200 personas. El detalle completo está en "Ver detalle".',items:['12x Globos surtidos standard T260 (paq. 20 unid.)','40x Globos corazón decorativos 18"','100x Gorros funyi metalizados','100x Antifaces fluo con elástico','4x Velas largas con brillos (paq. 6 unid.)','20x Lanzapapel de resorte','4x Collares flexibles neón (tubo x50 unid.)','100x Pulseras mágicas fluorescentes','4x Burbujero surtido (paq. 48 unid.)'],price:158250.52,units:'9 artículos surtidos',img:'https://www.tyna.com.ar/archivos/imagenes_productos/1080000458.jpg',badge:'200 Personas',badgeType:'',linea:'🎁 Combo armado',sellMode:'bulk'},
+  ],
   cotillon: [
     {id:'cot-1080015943',name:'IMP GLOBO BURBUJA PVC C/ LUZ MULTICOLOR *UNI',desc:'',price:1727.15,units:'Por unidad',img:'https://www.tyna.com.ar/archivos/imagenes_productos/1080015943.jpg',badge:'',badgeType:'',linea:'DECORACION CON GLOBOS',sellMode:'bulk'},
     {id:'cot-1080010842',name:'MOÑO PARA AUTO *UND.',desc:'',price:28276.11,units:'Por unidad',img:'https://www.tyna.com.ar/archivos/imagenes_productos/1080010842.jpg',badge:'',badgeType:'',linea:'DESCARTABLES',sellMode:'bulk'},
@@ -4133,6 +4159,16 @@ document.addEventListener('keydown', e => {
 ════════════════════════════════════════ */
 renderAllGrids();
 renderLineaFilters();
+
+function toggleCombosView(){
+  const showingCombos = document.getElementById('sec-combos').classList.contains('hidden');
+  document.getElementById('sec-combos').classList.toggle('hidden', !showingCombos);
+  document.getElementById('sec-cotillon').classList.toggle('hidden', showingCombos);
+  document.getElementById('lineaToggle').style.display = showingCombos ? 'none' : '';
+  document.getElementById('combosToggle').textContent = showingCombos ? '📋 Ver catálogo completo' : '🎁 Combos Cotillón';
+  document.getElementById('combosToggle').classList.toggle('active', showingCombos);
+  document.getElementById(showingCombos ? 'sec-combos' : 'sec-cotillon').scrollIntoView({behavior:'smooth', block:'start'});
+}
 
 function irAProductos(){
   const sec = document.getElementById('productos');
