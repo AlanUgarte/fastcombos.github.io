@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orden de Venta — FastCombos 🎂</title>
+<title>Orden de Venta — FastCotillón 🎂</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
@@ -338,7 +338,7 @@ img{max-width:100%;}
 <!-- ACTION BAR (solo en pantalla, no en impresión) -->
 <div class="action-bar" id="actionBar">
   <a href="index.html" class="action-bar-brand">
-    <span>Fast</span><em>Combos</em>
+    <span>Fast</span><em>Cotillón</em>
   </a>
   <div class="action-bar-right">
     <button class="btn btn-outline" onclick="window.history.back()">← Volver</button>
@@ -427,7 +427,7 @@ function render(d){
         <p>Este link de remito no contiene datos válidos.<br>
         Verificá que esté completo o generá uno nuevo desde la tienda.</p>
         <br>
-        <a href="index.html" style="color:var(--gold);font-size:.88rem;font-weight:500;">← Ir a FastCombos</a>
+        <a href="index.html" style="color:var(--gold);font-size:.88rem;font-weight:500;">← Ir a FastCotillón</a>
       </div>`;
     return;
   }
@@ -460,13 +460,13 @@ function render(d){
     ? `<div class="rem-badge">🚚 Envío a domicilio</div>`
     : `<div class="rem-badge">🏪 Retiro local</div>`;
 
-  document.title = `Remito N°${d.nro} — ${d.name} — FastCombos`;
+  document.title = `Remito N°${d.nro} — ${d.name} — FastCotillón`;
 
   root.innerHTML = `
   <div class="remito">
     <div class="rem-header">
       <div class="rem-header-left">
-        <div class="rem-brand"><span>Fast</span><span>Combos</span></div>
+        <div class="rem-brand"><span>Fast</span><span>Cotillón</span></div>
         <div class="rem-brand-sub">Rosario, Santa Fe · +54 9 341 270-8638 · Lun–Sáb 9–20 hs</div>
       </div>
       <div class="rem-header-right">
@@ -506,7 +506,7 @@ function render(d){
     </div>
     <div class="rem-footer">
       <div class="rem-footer-txt">
-        <strong>FastCombos</strong><br>
+        <strong>FastCotillón</strong><br>
         Rosario, Santa Fe, Argentina<br>
         Lunes a Sábado de 9 a 20 hs
       </div>
